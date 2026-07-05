@@ -1,12 +1,12 @@
 /* 🌐 실무 표준 2: CSS 전역 변수 (:root) */
 :root {
-    /* Color Palette - 다크모드 (우주 본부 - 기본 상태) */
+    /* Color Palette - 다크모드 (기본 상태) */
     --bg-main: #0a0f1a; /* 칠흑 같은 밤하늘 (약간의 블루 톤 추가) */
     --bg-secondary: #161b22; /* 살짝 밝은 패널 */
     --text-main: #e6edf3;
     --text-muted: #8b949e;
     
-    /* 포인트 광원 (UFO 네온 옐로우 & 레이더 그린) */
+    /* 포인트 광원 (네온 옐로우 & 레이더 그린) */
     --glow-primary: #FFEA00; 
     --glow-primary-dim: rgba(255, 234, 0, 0.2);
     --glow-secondary: #39FF14;
@@ -23,14 +23,14 @@
     --font-body: 'Noto Sans KR', sans-serif;
 }
 
-/* 라이트 모드 (지구 위장 모드) 변수 스와핑 */
+/* 라이트 모드 변수 스와핑 */
 body[data-theme="light"] {
     --bg-main: #f8f9fa;
     --bg-secondary: #ffffff;
     --text-main: #24292f;
     --text-muted: #57606a;
     
-    /* 라이트모드에서는 눈부시지 않게 톤 다운된 골드빛 */
+    /* 라이트모드 적용 시 눈부시지 않게 톤 다운된 골드빛 적용 */
     --glow-primary: #d4a017;
     --glow-primary-dim: rgba(212, 160, 23, 0.1);
 }
@@ -47,7 +47,7 @@ body {
     background-color: var(--bg-main);
     color: var(--text-main);
     line-height: 1.6;
-    /* 테마 전환 시 부드러운 트랜지션 (마이크로 인터랙션) */
+    /* 테마 전환 시 부드러운 트랜지션 (마이크로 인터랙션) 적용 */
     transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
@@ -67,7 +67,201 @@ ul {
 }
 
 /* ====================================================
-   이 아래 공간부터는 [2단계: 레이아웃]과 
-   [3단계: 시네마틱 스타일링]에서 집중적으로 채워나갈 예정입니다.
-   지금은 뼈대만 존재합니다!
+   [Step 2: 반응형 레이아웃 (Flexbox & Grid)]
 ==================================================== */
+
+/* --- 1. 기본 레이아웃 및 여백 --- */
+section {
+    padding: var(--space-xl) var(--space-md);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- 2. 헤더 및 네비게이션 (Flexbox) --- */
+#main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-main);
+    z-index: 1000;
+    border-bottom: 1px solid var(--bg-secondary);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: var(--font-heading);
+}
+
+#main-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.nav-links {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.nav-links a {
+    font-weight: 700;
+}
+
+.theme-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.hamburger {
+    display: none; /* 기본적으로 데스크톱에서는 숨김 */
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* --- 3. 대문(Hero) 영역 (Flexbox 수직수평 중앙정렬) --- */
+#hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    max-width: 800px;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    line-height: 1.2;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+}
+
+.cta-button {
+    display: inline-block;
+    padding: var(--space-sm) var(--space-lg);
+    border: 2px solid var(--text-main);
+    border-radius: 4px;
+    margin-top: var(--space-md);
+}
+
+/* --- 4. About 영역 --- */
+.about-section h2, .projects-section h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: var(--space-xl);
+}
+
+.about-card {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 1.2rem;
+    line-height: 1.8;
+}
+
+/* --- 5. Projects 영역 (CSS Grid 바둑판 정렬) --- */
+.filter-tabs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.filter-btn {
+    background: none;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background-color: var(--text-main);
+    color: var(--bg-main);
+    border-color: var(--text-main);
+}
+
+/* CSS Grid의 마법: 최소 300px 카드를 1fr 비율로 화면 꽉 차게 자동 배치 */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+}
+
+.loading-spinner {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-xl) 0;
+    color: var(--text-muted);
+}
+
+/* --- 6. 푸터 & 기타 --- */
+footer {
+    text-align: center;
+    padding: var(--space-lg);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--bg-secondary);
+}
+
+.scroll-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background-color: var(--text-main);
+    color: var(--bg-main);
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: none; /* 향후 JS로 스크롤 시 등장하게 처리 */
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+}
+
+/* ====================================================
+   미디어 쿼리 (@media) - 스마트폰/태블릿 반응형 처리
+==================================================== */
+@media (max-width: 768px) {
+    /* 모바일에서는 네비게이션 링크 숨기고 햄버거 메뉴 노출 */
+    .nav-links {
+        display: none;
+    }
+    .hamburger {
+        display: block;
+    }
+    
+    /* 폰트 사이즈 조정 */
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+    .hero-content p {
+        font-size: 1rem;
+    }
+    .about-section h2, .projects-section h2 {
+        font-size: 2rem;
+    }
+}
