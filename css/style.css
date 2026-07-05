@@ -1,0 +1,73 @@
+/* 🌐 실무 표준 2: CSS 전역 변수 (:root) */
+:root {
+    /* Color Palette - 다크모드 (우주 본부 - 기본 상태) */
+    --bg-main: #0a0f1a; /* 칠흑 같은 밤하늘 (약간의 블루 톤 추가) */
+    --bg-secondary: #161b22; /* 살짝 밝은 패널 */
+    --text-main: #e6edf3;
+    --text-muted: #8b949e;
+    
+    /* 포인트 광원 (UFO 네온 옐로우 & 레이더 그린) */
+    --glow-primary: #FFEA00; 
+    --glow-primary-dim: rgba(255, 234, 0, 0.2);
+    --glow-secondary: #39FF14;
+    --accent-danger: #ff3333; /* CTA 버튼, 에러 메시지 등 */
+
+    /* Spacing Tokens */
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 2rem;
+    --space-xl: 4rem;
+
+    /* Typography */
+    --font-heading: 'Orbit', sans-serif; /* 사이파이 느낌 폰트 */
+    --font-body: 'Noto Sans KR', sans-serif;
+}
+
+/* 라이트 모드 (지구 위장 모드) 변수 스와핑 */
+body[data-theme="light"] {
+    --bg-main: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --text-main: #24292f;
+    --text-muted: #57606a;
+    
+    /* 라이트모드에서는 눈부시지 않게 톤 다운된 골드빛 */
+    --glow-primary: #d4a017;
+    --glow-primary-dim: rgba(212, 160, 23, 0.1);
+}
+
+/* 🌐 실무 표준 3: CSS 초기화 (Reset) */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.6;
+    /* 테마 전환 시 부드러운 트랜지션 (마이크로 인터랙션) */
+    transition: background-color 0.3s ease, color 0.3s ease; 
+}
+
+/* 폰트 및 기본 텍스트 셋팅 */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    letter-spacing: 2px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style: none;
+}
+
+/* ====================================================
+   이 아래 공간부터는 [2단계: 레이아웃]과 
+   [3단계: 시네마틱 스타일링]에서 집중적으로 채워나갈 예정입니다.
+   지금은 뼈대만 존재합니다!
+==================================================== */

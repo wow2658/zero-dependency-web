@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우주 본부 | 포트폴리오</title>
+    <!-- CSS 연결 -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome (허용된 아이콘) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (허용된 폰트: 사이파이 느낌의 Orbit과 기본 Noto Sans) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbit&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 🌐 실무 표준: JS 지연 로딩 (defer) -->
+    <script src="js/main.js" defer></script>
+</head>
+<body data-theme="dark">
+    <!-- 🌐 실무 표준: 시맨틱 마크업 (header, nav) -->
+    <header id="main-header">
+        <div class="logo">🛸 본부 통신망</div>
+        <nav id="main-nav">
+            <ul class="nav-links">
+                <li><a href="#hero">상황실(Hero)</a></li>
+                <li><a href="#about">정체(About)</a></li>
+                <li><a href="#projects">침략 목표(Projects)</a></li>
+                <li><a href="#contact">교신(Contact)</a></li>
+            </ul>
+            <!-- 테마 토글 버튼 -->
+            <button id="theme-toggle" class="theme-btn" aria-label="테마 전환"><i class="fas fa-moon"></i></button>
+        </nav>
+        <!-- 모바일 햄버거 메뉴 -->
+        <button id="mobile-menu-btn" class="hamburger" aria-label="메뉴 열기">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section">
+            <div class="hero-content">
+                <h1 class="glow-text">지구는 새로운 지배자를<br>맞이할 준비가 되었는가</h1>
+                <p>프론트엔드와 게임 생태계를 넘나드는 1인 창작자의 우주 본부</p>
+                <a href="#projects" class="cta-button">침략 개시 (작업물 보기)</a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about-section">
+            <h2>정체 (About Me)</h2>
+            <article class="about-card">
+                <p>유니티와 언리얼로 무장하고, 이제는 웹 생태계마저 정복하러 온 개발자입니다.</p>
+            </article>
+        </section>
+
+        <!-- Projects Section (API Target) -->
+        <section id="projects" class="projects-section">
+            <h2>침략 목표 (Projects)</h2>
+            <!-- 카테고리 탭 (7단계 필터링 대비) -->
+            <div id="filter-tabs" class="filter-tabs">
+                <button class="filter-btn active" data-filter="all">전체 타겟</button>
+                <button class="filter-btn" data-filter="game">게임</button>
+                <button class="filter-btn" data-filter="web">웹</button>
+            </div>
+            
+            <!-- API 데이터 렌더링 영역 -->
+            <div id="project-grid" class="project-grid">
+                <!-- JS가 카드를 여기에 주입합니다. -->
+                <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 타겟 데이터 수신 중...</div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="contact-section">
+            <h2>본부로 교신하기 (Contact)</h2>
+            <form id="contact-form" class="contact-form">
+                <div class="input-group">
+                    <label for="email">통신망 (Email)</label>
+                    <input type="email" id="email" name="email" placeholder="alien@space.com" required>
+                    <span class="error-msg">정확한 통신망 주소를 입력하라.</span>
+                </div>
+                <div class="input-group">
+                    <label for="message">교신 내용 (Message)</label>
+                    <textarea id="message" name="message" rows="4" required></textarea>
+                    <span class="error-msg">내용이 비어있다.</span>
+                </div>
+                <button type="submit" class="submit-btn">교신 전송</button>
+            </form>
+        </section>
+    </main>
+
+    <!-- 🌐 실무 표준: 시맨틱 마크업 (footer) -->
+    <footer>
+        <p>&copy; 2026 1인 창작자 우주 본부. All rights reserved.</p>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scroll-top-btn" class="scroll-top" aria-label="위로 가기">
+        <i class="fas fa-space-shuttle"></i>
+    </button>
+</body>
+</html>
