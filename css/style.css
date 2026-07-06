@@ -45,6 +45,8 @@ body[data-theme="light"] {
 body {
     font-family: var(--font-body);
     background-color: var(--bg-main);
+    /* UFO 조명이 내리쬐는 듯한 심연의 배경 (다크모드 전용) */
+    background-image: radial-gradient(circle at 50% 0%, #111e18 0%, var(--bg-main) 70%);
     color: var(--text-main);
     line-height: 1.6;
     /* 테마 전환 시 부드러운 트랜지션 (마이크로 인터랙션) 적용 */
@@ -83,11 +85,19 @@ section {
     justify-content: space-between;
     align-items: center;
     padding: var(--space-md) var(--space-lg);
+    /* 
+     * position: sticky 의 마법: 
+     * 평소에는 자기 자리에 있다가, 스크롤을 내려서 화면 위쪽(top: 0)에 닿는 순간
+     * 그 자리에 딱 붙어서(sticky) 고정되는 실무 필수 속성이다. (주로 상단 네비게이션 바에 쓰인다.)
+     */
     position: sticky;
     top: 0;
-    background-color: var(--bg-main);
+    /* 우주선 유리 패널 느낌의 반투명 헤더 (Glassmorphism) */
+    background: rgba(10, 15, 26, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     z-index: 1000;
-    border-bottom: 1px solid var(--bg-secondary);
+    border-bottom: 1px solid rgba(255, 234, 0, 0.1);
 }
 
 .logo {
@@ -130,6 +140,12 @@ section {
 
 /* --- 3. 대문(Hero) 영역 (Flexbox 수직수평 중앙정렬) --- */
 #hero {
+    /* 
+     * height 대신 min-height를 쓰는 이유:
+     * 100vh는 브라우저 창(Viewport) 높이의 100%를 의미한다.
+     * 무조건 height: 100vh로 고정해버리면, 모바일 환경 등에서 안의 글자가 많아질 때 글자가 박스를 뚫고 나가는 버그가 생긴다.
+     * min-height로 주면 '최소 화면 높이만큼은 꽉 채우되, 글자가 넘치면 박스도 같이 늘어나라'는 안전한 코드가 된다.
+     */
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -145,9 +161,23 @@ section {
     max-width: 800px;
 }
 
-.hero-content h1 {
+.glow-text {
     font-size: 3rem;
     line-height: 1.2;
+    color: #fff;
+    /* UFO의 강렬한 노란/초록 빛 발광 효과 */
+    text-shadow: 
+        0 0 5px #fff,
+        0 0 20px var(--glow-primary),
+        0 0 40px var(--glow-primary),
+        0 0 80px var(--glow-primary);
+    animation: ufo-pulsate 3s infinite alternate;
+}
+
+/* 발광 애니메이션 키프레임 */
+@keyframes ufo-pulsate {
+    0% { text-shadow: 0 0 10px var(--glow-primary), 0 0 20px var(--glow-primary); }
+    100% { text-shadow: 0 0 20px #fff, 0 0 40px var(--glow-primary), 0 0 80px var(--glow-primary), 0 0 120px var(--glow-secondary); }
 }
 
 .hero-content p {
@@ -158,9 +188,24 @@ section {
 .cta-button {
     display: inline-block;
     padding: var(--space-sm) var(--space-lg);
-    border: 2px solid var(--text-main);
     border-radius: 4px;
     margin-top: var(--space-md);
+    /* 외계 우주선 조종석 버튼 스타일 */
+    color: var(--glow-primary);
+    border: 2px solid var(--glow-primary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    background: transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px var(--glow-primary-dim), inset 0 0 10px var(--glow-primary-dim);
+}
+
+.cta-button:hover {
+    background-color: var(--glow-primary);
+    color: #000;
+    box-shadow: 0 0 20px var(--glow-primary), 0 0 40px var(--glow-primary);
+    transform: translateY(-3px);
 }
 
 /* --- 4. About 영역 --- */
@@ -176,6 +221,20 @@ section {
     text-align: center;
     font-size: 1.2rem;
     line-height: 1.8;
+    /* Glassmorphism (우주선 유리 패널) */
+    background: rgba(22, 27, 34, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 234, 0, 0.1);
+    padding: var(--space-xl);
+    border-radius: 12px;
+    /* 호버 시 붕 떠오르는 애니메이션 */
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.about-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 40px rgba(255, 234, 0, 0.2);
 }
 
 /* --- 5. Projects 영역 (CSS Grid 바둑판 정렬) --- */
@@ -202,9 +261,14 @@ section {
     border-color: var(--text-main);
 }
 
-/* CSS Grid의 마법: 최소 300px 카드를 1fr 비율로 화면 꽉 차게 자동 배치 */
 .project-grid {
     display: grid;
+    /* 
+     * CSS Grid 최고의 마법 (미디어 쿼리 없이 반응형 만들기):
+     * - minmax(300px, 1fr): 각 카드의 너비는 최소 300px을 보장하되, 화면이 넓어지면 남는 공간(1fr)을 공평하게 나눠 가져라.
+     * - auto-fit: 화면이 좁아지거나 넓어짐에 따라, 300px 카드가 들어갈 수 있는 만큼 알아서 열(Column)의 개수를 조절해라.
+     * 이 한 줄의 코드 덕분에 카드가 화면 크기에 맞춰 3열 -> 2열 -> 1열로 자동 변환된다.
+     */
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: var(--space-lg);
 }
@@ -244,6 +308,12 @@ footer {
 
 /* ====================================================
    미디어 쿼리 (@media) - 스마트폰/태블릿 반응형 처리
+   * 768px 분기점(Breakpoint)의 실무적 의미:
+     1) 역사적 배경: 오리지널 아이패드(iPad)의 세로 해상도가 정확히 768px이었다.
+     2) 업계 표준: Bootstrap, Tailwind 등 글로벌 CSS 프레임워크들이 768px을 
+        태블릿(Medium) 사이즈의 기준점으로 삼으면서 전 세계 웹 개발의 표준이 되었다.
+     3) 실무 기준: 767px 이하는 스마트폰(1열), 768px~1023px은 태블릿(2열), 
+        1024px 이상은 PC(3열 이상)로 취급하는 것이 가장 대중적이고 안전한 분기점이다.
 ==================================================== */
 @media (max-width: 768px) {
     /* 모바일에서는 네비게이션 링크 숨기고 햄버거 메뉴 노출 */
