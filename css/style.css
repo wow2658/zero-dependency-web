@@ -20,7 +20,7 @@
 
     /* Typography */
     --font-heading: 'Orbit', sans-serif; /* 사이파이 느낌 폰트 */
-    --font-body: 'Noto Sans KR', sans-serif;
+    --font-body: 'Orbit', sans-serif; /* 사이파이 컨셉 극대화를 위해 본문도 통일 */
 }
 
 /* 라이트 모드 변수 스와핑 */
@@ -44,9 +44,9 @@ body[data-theme="light"] {
 
 body {
     font-family: var(--font-body);
-    background-color: var(--bg-main);
-    /* UFO 조명이 내리쬐는 듯한 심연의 배경 (다크모드 전용) */
-    background-image: radial-gradient(circle at 50% 0%, #111e18 0%, var(--bg-main) 70%);
+    background-color: transparent; /* 비디오가 보이도록 투명화 */
+    /* 스크롤리텔링 동영상을 충분히 길게 감상할 수 있도록 임시로 스크롤 길이를 5배로 늘림 (나중에 프로젝트 카드들이 채워지면 뺄 예정) */
+    min-height: 500vh;
     color: var(--text-main);
     line-height: 1.6;
     /* 테마 전환 시 부드러운 트랜지션 (마이크로 인터랙션) 적용 */
@@ -92,10 +92,14 @@ section {
      */
     position: sticky;
     top: 0;
-    /* 우주선 유리 패널 느낌의 반투명 헤더 (Glassmorphism) */
+    /* 
+     * Glassmorphism (반투명 유리 효과)의 원리:
+     * background에 rgba()로 투명도를 주고, backdrop-filter: blur()를 적용하면
+     * 요소 자체가 아니라 '요소 뒤에 비치는 배경'이 흐릿해지면서 고급스러운 유리 질감이 완성된다.
+     */
     background: rgba(10, 15, 26, 0.8);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* 사파리 브라우저 호환성 */
     z-index: 1000;
     border-bottom: 1px solid rgba(255, 234, 0, 0.1);
 }
@@ -165,7 +169,11 @@ section {
     font-size: 3rem;
     line-height: 1.2;
     color: #fff;
-    /* UFO의 강렬한 노란/초록 빛 발광 효과 */
+    /* 
+     * 빛 번짐(Glow) 효과의 원리:
+     * text-shadow나 box-shadow를 콤마(,)로 여러 번 겹쳐 쓰면,
+     * 좁게 퍼지는 빛부터 넓게 퍼지는 빛까지 중첩되어 마치 실제 네온사인처럼 발광하는 효과를 낼 수 있다.
+     */
     text-shadow: 
         0 0 5px #fff,
         0 0 20px var(--glow-primary),
@@ -174,7 +182,11 @@ section {
     animation: ufo-pulsate 3s infinite alternate;
 }
 
-/* 발광 애니메이션 키프레임 */
+/* 
+ * CSS 애니메이션 (@keyframes):
+ * 0%(시작)부터 100%(끝)까지 상태 변화를 정의한다.
+ * 요소에 animation 속성으로 이 키프레임을 연결하고 'infinite alternate'를 주면 0->100->0으로 영원히 박동하게 된다.
+ */
 @keyframes ufo-pulsate {
     0% { text-shadow: 0 0 10px var(--glow-primary), 0 0 20px var(--glow-primary); }
     100% { text-shadow: 0 0 20px #fff, 0 0 40px var(--glow-primary), 0 0 80px var(--glow-primary), 0 0 120px var(--glow-secondary); }
@@ -205,6 +217,11 @@ section {
     background-color: var(--glow-primary);
     color: #000;
     box-shadow: 0 0 20px var(--glow-primary), 0 0 40px var(--glow-primary);
+    /* 
+     * 마이크로 인터랙션 (떠오르기):
+     * translateY(-3px)는 요소를 위로 3px 이동시킨다.
+     * 마우스 호버 시 붕 떠오르는 느낌을 주어 버튼이 눌릴 수 있다는(Clickable) 인식을 사용자에게 직관적으로 전달한다.
+     */
     transform: translateY(-3px);
 }
 
@@ -235,6 +252,57 @@ section {
 .about-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 10px 40px rgba(255, 234, 0, 0.2);
+}
+
+/* 타자기 커서 (깜빡임) 효과 */
+#typing-text::after {
+    content: '|';
+    animation: blink-cursor 1s step-end infinite;
+}
+@keyframes blink-cursor {
+    50% { opacity: 0; }
+}
+
+/* --- 4.5 Skills Section --- */
+.skills-container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.skill-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.skill-name {
+    width: 130px;
+    font-weight: 700;
+    color: var(--text-main);
+    text-align: right;
+    letter-spacing: 1px;
+}
+
+.skill-bar-bg {
+    flex: 1;
+    height: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 234, 0, 0.2);
+}
+
+.skill-bar-fill {
+    height: 100%;
+    width: 0%; /* JS가 동적으로 너비를 제어 */
+    background: linear-gradient(90deg, var(--glow-secondary), var(--glow-primary));
+    border-radius: 10px;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px var(--glow-primary);
 }
 
 /* --- 5. Projects 영역 (CSS Grid 바둑판 정렬) --- */
@@ -278,9 +346,108 @@ section {
     text-align: center;
     padding: var(--space-xl) 0;
     color: var(--text-muted);
+}/* --- 6. Contact Section --- */
+.contact-section {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+    text-align: center;
+    position: relative;
+    z-index: 10;
 }
 
-/* --- 6. 푸터 & 기타 --- */
+.contact-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-lg);
+    color: var(--glow-primary);
+    text-shadow: 0 0 10px var(--glow-primary-dim);
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: rgba(10, 15, 26, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 234, 0, 0.2);
+    padding: var(--space-xl);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    text-align: left;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: bold;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--text-muted);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--glow-primary);
+    box-shadow: 0 0 10px var(--glow-primary-dim);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.error-msg {
+    color: var(--accent-danger);
+    font-size: 0.85rem;
+    min-height: 1.2rem;
+}
+
+.submit-btn {
+    padding: 1rem;
+    background: transparent;
+    color: var(--glow-primary);
+    border: 2px solid var(--glow-primary);
+    border-radius: 4px;
+    font-family: var(--font-heading);
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.submit-btn:hover {
+    background: var(--glow-primary);
+    color: #000;
+    box-shadow: 0 0 20px var(--glow-primary);
+    transform: translateY(-2px);
+}
+
+.success-msg {
+    color: var(--glow-secondary);
+    text-align: center;
+    font-weight: bold;
+    margin-top: 1rem;
+    min-height: 1.5rem;
+}
+
+/* --- 7. 푸터 & 기타 --- */
 footer {
     text-align: center;
     padding: var(--space-lg);
@@ -335,3 +502,54 @@ footer {
         font-size: 2rem;
     }
 }
+
+/* --- 스크롤 연동 비디오 배경 --- */
+.bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover; /* 화면 비율 찌그러짐 방지 */
+    z-index: -3; /* 최하단 배치 */
+}
+
+/* --- 푸터 상단 인라인 눈 깜빡임 비디오 --- */
+.eyeblink-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background-color: var(--bg-color); /* 사이트 배경색과 일치 */
+    padding: 2rem 0;
+}
+
+.eyeblink-inline {
+    width: 100%;
+    max-width: 1000px;
+    height: auto;
+    object-fit: cover;
+    mix-blend-mode: screen;
+    
+    /* 비디오의 네모난 경계선을 부드럽게 지워주는 페더링(마스크) 효과 */
+    -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 80%);
+    mask-image: radial-gradient(ellipse at center, black 60%, transparent 80%);
+}
+
+/* 두 번째 비디오를 첫 번째 비디오 위에 곱하기(Multiply) 모드로 합성 */
+.blend-multiply {
+    mix-blend-mode: multiply;
+}
+
+.video-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* 기존 body에 있던 심연 배경을 오버레이로 옮겨서 비디오 위에 살짝 덮어줌 */
+    background: radial-gradient(circle at 50% 0%, rgba(17, 30, 24, 0.4) 0%, rgba(5, 5, 5, 0.8) 70%);
+    z-index: -2;
+    pointer-events: none; /* 클릭 방해 금지 */
+}
+
+

@@ -6,8 +6,8 @@
          - 이 태그가 누락되면 CSS에서 미디어 쿼리를 작성하더라도 스마트폰에서 데스크톱 화면이 축소되어 보인다. 모바일 기기에게 "화면 너비를 기기 너비에 맞춰라"고 명령하는 필수 태그이다. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>개발자 포트폴리오</title>
-    <!-- CSS 연결 -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- CSS 연결 (?v=2 등 쿼리스트링을 붙이면 브라우저 캐시를 무시하고 최신 파일을 강제로 불러옵니다) -->
+    <link rel="stylesheet" href="css/style.css?v=2">
     <!-- 🎨 디자인 에셋 1: Font Awesome (과제 조건상 아이콘/폰트 등 순수 디자인 소스 CDN은 허용됨) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -31,6 +31,11 @@
        HTML5의 커스텀 속성(data-*)을 활용하면 JS 접근이 용이하며, 
        CSS에서도 body[data-theme="dark"]와 같이 상태를 명확히 분리하여 제어할 수 있다. -->
 <body data-theme="dark">
+    <!-- 스크롤 연동 배경 비디오 및 어두운 오버레이 -->
+    <video id="scroll-video" class="bg-video" muted playsinline preload="auto">
+        <source src="image/bg-video01-web.mp4" type="video/mp4">
+    </video>
+    <div class="video-overlay"></div>
     <!-- 
       =========================================
       💡 [HTML 마크업 핵심 개념 요약]
@@ -43,76 +48,114 @@
       =========================================
     -->
     <!-- 🌐 실무 표준: 시맨틱 마크업 (header, nav) -->
-    <header id="main-header">
-        <div class="logo">Dev Portfolio</div>
+    <header id="main-header" class="header">
+        <div class="logo">B4-1 Portfolio</div>
         <nav id="main-nav">
             <ul class="nav-links">
                 <li><a href="#hero">Home</a></li>
                 <li><a href="#about">About</a></li>
+                <li><a href="#skills">Skills</a></li>
                 <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
             </ul>
-            <!-- 테마 토글 버튼 
-                 * <i> 태그의 의미: 과거에는 이탤릭체(Italic)를 뜻했으나, 현대 실무에서는 Icon의 앞 글자 'i'를 차용하여 아이콘 폰트(Font Awesome 등) 전용 태그로 사용하는 것이 국룰(표준 관습)이다. 
-                 * aria-label (웹 접근성): 텍스트 없이 아이콘만 있는 버튼의 경우, 화면 낭독기가 버튼의 용도를 파악할 수 있도록 기계용 이름표를 제공하는 실무 필수 속성이다. -->
             <button id="theme-toggle" class="theme-btn" aria-label="테마 전환"><i class="fas fa-moon"></i></button>
         </nav>
-        <!-- 모바일 햄버거 메뉴 
-             * 햄버거 메뉴 명칭 유래: 가로줄 3개(≡)가 빵-패티-빵 형태의 햄버거와 유사하여 붙여진 글로벌 공식 명칭이다. 
-             * (참고: 세로 점 3개는 '케밥 메뉴', 가로 점 3개는 '미트볼 메뉴'라 부른다.) -->
         <button id="mobile-menu-btn" class="hamburger" aria-label="메뉴 열기">
             <i class="fas fa-bars"></i>
         </button>
     </header>
 
     <main>
-        <!-- Hero Section 
-             * 'Hero' 명칭 유래: 웹사이트 접속 시 가장 먼저 시선을 사로잡는 대문 영역이다. 
-               영화 업계에서 메인 소품을 'Hero Prop'이라 부르던 것에서 유래하여, 유저의 이탈을 막는 '주인공' 역할을 한다는 의미를 담고 있다. -->
-        <section id="hero" class="hero-section">
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section fade-in">
             <div class="hero-content">
-                <!-- 
-                  * <h1> (Heading): 페이지의 핵심 대제목을 뜻한다. (숫자가 작을수록 중요도가 높다.)
-                  * <p> (Paragraph): 제목에 부연되는 일반적인 문단(본문 줄글)을 뜻한다. 
-                -->
-                <h1 class="glow-text">게임 소프트웨어 개발자입니다</h1>
-                <p>게임 클라이언트 및 시스템 로직을 구현합니다</p>
-                <a href="#projects" class="cta-button">프로젝트 보기</a>
+                <h1 class="glow-text" id="typing-text"></h1>
+                <p>Welcome to the System.</p>
+                <a href="#projects" class="cta-button">ACCESS DATABASE</a>
             </div>
         </section>
 
         <!-- About Section -->
-        <section id="about" class="about-section">
-            <h2>About Me</h2>
+        <section id="about" class="about-section fade-in">
+            <h2 class="section-title">ABOUT ENTITY</h2>
             <article class="about-card">
-                <p>게임 소프트웨어 개발 포트폴리오입니다.<br>요구사항에 맞추어 시스템을 설계하고, 지정된 기능이 정상적으로 동작하도록 코드를 작성합니다.</p>
+                <p><strong>[STATUS]</strong> 익명의 게임 개발자</p>
+                <p><strong>[LOG]</strong> 퍼렁별(Earth)의 게임 몇 가지를 모작하며 시스템을 분석해왔음.</p>
             </article>
         </section>
 
-        <!-- Projects Section (API Target) -->
-        <section id="projects" class="projects-section">
-            <h2>Projects</h2>
-            <!-- 카테고리 탭 (7단계 필터링 대비) 
-                 * data-* (커스텀 데이터 속성): 개발자가 HTML 태그에 임의의 데이터를 몰래 저장해둘 때 사용하는 HTML5 표준 속성이다.
-                 * 동작 원리: JS에서 버튼이 클릭될 때 이 속성값(all, game, web)을 읽어와서, 해당 카테고리에 맞는 프로젝트만 골라내어 화면에 필터링(렌더링)한다. -->
-            <div id="filter-tabs" class="filter-tabs">
-                <button class="filter-btn active" data-filter="all">전체</button>
-                <button class="filter-btn" data-filter="game">게임</button>
-                <button class="filter-btn" data-filter="web">웹</button>
-            </div>
-            
-            <!-- API 데이터 렌더링 영역 -->
-            <div id="project-grid" class="project-grid">
-                <!-- JS가 카드를 여기에 주입한다. -->
-                <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 프로젝트 데이터를 불러오는 중...</div>
+        <!-- Skills Section -->
+        <section id="skills" class="skills-section fade-in">
+            <h2 class="section-title">COMBAT SKILLS</h2>
+            <div class="skills-container">
+                <div class="skill-bar-container">
+                    <span class="skill-name">Unity (C#)</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
+                </div>
+                <div class="skill-bar-container">
+                    <span class="skill-name">Unreal (C++)</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
+                </div>
+                <div class="skill-bar-container">
+                    <span class="skill-name">Rigging</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
+                </div>
+                <div class="skill-bar-container">
+                    <span class="skill-name">Effect</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
+                </div>
             </div>
         </section>
 
+        <!-- Projects Section -->
+        <section id="projects" class="projects-section fade-in">
+            <h2 class="section-title">CONFIDENTIAL PROJECTS</h2>
+            <div id="filter-tabs" class="filter-tabs">
+                <button class="filter-btn active" data-filter="all">ALL</button>
+                <button class="filter-btn" data-filter="C#">C#</button>
+                <button class="filter-btn" data-filter="C++">C++</button>
+            </div>
+            <div id="project-grid" class="project-grid">
+                <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 암호 해독 중 (Loading...)</div>
+            </div>
+        </section>
 
     </main>
 
+    <!-- 눈 깜빡임 비디오 (푸터 상단 배치) -->
+    <div class="eyeblink-container">
+        <video id="eyeblink-video" class="eyeblink-inline" muted playsinline autoplay preload="auto">
+            <source src="image/eyeblink.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section fade-in">
+        <h2 class="section-title">SECURE TRANSMISSION</h2>
+        <form id="contact-form" class="contact-form" novalidate>
+            <div class="form-group">
+                <label for="name">Alias (이름)</label>
+                <input type="text" id="name" name="name" required>
+                <span class="error-msg" id="name-error"></span>
+            </div>
+            <div class="form-group">
+                <label for="email">Com-link (이메일)</label>
+                <input type="email" id="email" name="email" required>
+                <span class="error-msg" id="email-error"></span>
+            </div>
+            <div class="form-group">
+                <label for="message">Message (내용)</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                <span class="error-msg" id="message-error"></span>
+            </div>
+            <button type="submit" class="submit-btn">SEND TRANSMISSION</button>
+            <p id="success-msg" class="success-msg"></p>
+        </form>
+    </section>
+
     <!-- 🌐 실무 표준: 시맨틱 마크업 (footer) -->
     <footer>
-        <p>&copy; 2026 Developer Portfolio. All rights reserved.</p>
+        <p>&copy; 2026 Agent W. All rights reserved.</p>
     </footer>
 
     <!-- Scroll to Top Button 
