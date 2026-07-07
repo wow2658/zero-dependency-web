@@ -12,6 +12,12 @@
     --glow-secondary: #39FF14;
     --accent-danger: #ff3333; /* CTA 버튼, 에러 메시지 등 */
 
+    /* 🌙 다크모드용 특수 효과 (글래스모피즘 & 비디오 오버레이) */
+    --glass-bg: rgba(10, 15, 26, 0.8);
+    --glass-border: rgba(255, 234, 0, 0.1);
+    --overlay-bg: radial-gradient(circle at 50% 0%, rgba(17, 30, 24, 0.4) 0%, rgba(5, 5, 5, 0.8) 70%);
+    --video-opacity: 1;
+
     /* Spacing Tokens */
     --space-sm: 0.5rem;
     --space-md: 1rem;
@@ -30,9 +36,16 @@ body[data-theme="light"] {
     --text-main: #24292f;
     --text-muted: #57606a;
     
-    /* 라이트모드 적용 시 눈부시지 않게 톤 다운된 골드빛 적용 */
-    --glow-primary: #d4a017;
-    --glow-primary-dim: rgba(212, 160, 23, 0.1);
+    /* 라이트모드 전용 🌿 상쾌한 민트(Mint) 컬러 팔레트 */
+    --glow-primary: #00b894; /* 메인 딥 민트 */
+    --glow-primary-dim: rgba(0, 184, 148, 0.15);
+    --glow-secondary: #55efc4; /* 서브 라이트 민트 (그라데이션용) */
+
+    /* ☀️ 라이트모드용 특수 효과 스와핑 */
+    --glass-bg: rgba(255, 255, 255, 0.85); /* 하얀 반투명 유리 */
+    --glass-border: rgba(0, 184, 148, 0.3); /* 유리 테두리도 은은한 민트빛으로 */
+    --overlay-bg: #f8f9fa; /* 비디오를 완전히 덮어버리는 뽀얀 하얀색 배경 */
+    --video-opacity: 0; /* 라이트모드에선 비디오 렌더링 완전 삭제 (투명도 0) */
 }
 
 /* 🌐 실무 표준 3: CSS 초기화 (Reset) */
@@ -97,11 +110,12 @@ section {
      * background에 rgba()로 투명도를 주고, backdrop-filter: blur()를 적용하면
      * 요소 자체가 아니라 '요소 뒤에 비치는 배경'이 흐릿해지면서 고급스러운 유리 질감이 완성된다.
      */
-    background: rgba(10, 15, 26, 0.8);
+    background: var(--glass-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px); /* 사파리 브라우저 호환성 */
     z-index: 1000;
-    border-bottom: 1px solid rgba(255, 234, 0, 0.1);
+    border-bottom: 1px solid var(--glass-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .logo {
@@ -168,7 +182,8 @@ section {
 .glow-text {
     font-size: 3rem;
     line-height: 1.2;
-    color: #fff;
+    color: var(--text-main);
+
     /* 
      * 빛 번짐(Glow) 효과의 원리:
      * text-shadow나 box-shadow를 콤마(,)로 여러 번 겹쳐 쓰면,
@@ -208,15 +223,24 @@ section {
     text-transform: uppercase;
     letter-spacing: 2px;
     font-weight: 700;
-    background: transparent;
-    transition: all 0.3s ease;
+    /* 💡 배경을 2배 크기의 그라데이션(왼쪽: 색상, 오른쪽: 투명)으로 만들고, 기본 위치를 오른쪽(투명)으로 둠 */
+    background: linear-gradient(to right, var(--glow-primary) 50%, transparent 50%);
+    background-size: 200% 100%;
+    background-position: right bottom;
+    transition: all 0.4s ease;
     box-shadow: 0 0 10px var(--glow-primary-dim), inset 0 0 10px var(--glow-primary-dim);
+    
+    /* 💡 버그 픽스: 주변 타이핑 애니메이션(DOM 리페인트)으로 인한 폰트 굵기 깜빡임(안티앨리어싱) 방지 */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 .cta-button:hover {
-    background-color: var(--glow-primary);
+    /* 💡 호버 시 배경 위치를 왼쪽으로 당겨와서 게이지가 차오르는 효과를 줌 */
+    background-position: left bottom;
     color: #000;
-    box-shadow: 0 0 20px var(--glow-primary), 0 0 40px var(--glow-primary);
+    /* 💡 유저 요청: 지저분한 글로우 효과 제거 */
+    box-shadow: none;
     /* 
      * 마이크로 인터랙션 (떠오르기):
      * translateY(-3px)는 요소를 위로 3px 이동시킨다.
@@ -239,19 +263,41 @@ section {
     font-size: 1.2rem;
     line-height: 1.8;
     /* Glassmorphism (우주선 유리 패널) */
-    background: rgba(22, 27, 34, 0.6);
+    background: var(--glass-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 234, 0, 0.1);
+    border: 1px solid var(--glass-border);
     padding: var(--space-xl);
     border-radius: 12px;
     /* 호버 시 붕 떠오르는 애니메이션 */
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    transition: transform 0.4s ease, box-shadow 0.4s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
 .about-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 10px 40px rgba(255, 234, 0, 0.2);
+    /* 💡 노란색 고정값을 빼고, 현재 테마(민트/네온)에 맞는 은은한 그림자 변수로 교체 */
+    box-shadow: 0 10px 40px var(--glow-primary-dim);
+}
+
+/* 프로필 이미지 스타일링 */
+.profile-img-container {
+    margin-bottom: var(--space-lg);
+}
+
+.profile-img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%; /* 완전한 원형으로 만들기 */
+    border: 3px solid var(--glow-primary); /* 네온 테두리 */
+    background: rgba(255, 255, 255, 0.05); /* 투명한 유리 배경 */
+    padding: 10px;
+    box-shadow: 0 0 20px var(--glow-primary-dim); /* 은은한 빛 반사 */
+    transition: transform 0.4s ease; /* 호버 시 부드러운 전환 효과 */
+}
+
+/* 카드를 호버할 때 프로필 이미지가 부드럽게 커지는 마이크로 인터랙션 */
+.about-card:hover .profile-img {
+    transform: scale(1.1);
 }
 
 /* 타자기 커서 (깜빡임) 효과 */
@@ -367,14 +413,15 @@ section {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    background: rgba(10, 15, 26, 0.8);
+    background: var(--glass-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 234, 0, 0.2);
+    border: 1px solid var(--glass-border);
     padding: var(--space-xl);
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     text-align: left;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .form-group {
@@ -427,15 +474,21 @@ section {
     font-weight: bold;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 2px;
+    
+    /* 💡 동일한 게이지 차오르는 효과 적용 */
+    background: linear-gradient(to right, var(--glow-primary) 50%, transparent 50%);
+    background-size: 200% 100%;
+    background-position: right bottom;
+    transition: all 0.4s ease;
 }
 
 .submit-btn:hover {
-    background: var(--glow-primary);
+    /* 💡 호버 시 배경 당겨와서 채우기 및 글로우 제거 */
+    background-position: left bottom;
     color: #000;
-    box-shadow: 0 0 20px var(--glow-primary);
+    box-shadow: none;
     transform: translateY(-2px);
 }
 
@@ -512,6 +565,8 @@ footer {
     height: 100vh;
     object-fit: cover; /* 화면 비율 찌그러짐 방지 */
     z-index: -3; /* 최하단 배치 */
+    opacity: var(--video-opacity);
+    transition: opacity 0.5s ease;
 }
 
 /* --- 푸터 상단 인라인 눈 깜빡임 비디오 --- */
@@ -547,9 +602,10 @@ footer {
     width: 100vw;
     height: 100vh;
     /* 기존 body에 있던 심연 배경을 오버레이로 옮겨서 비디오 위에 살짝 덮어줌 */
-    background: radial-gradient(circle at 50% 0%, rgba(17, 30, 24, 0.4) 0%, rgba(5, 5, 5, 0.8) 70%);
+    background: var(--overlay-bg);
     z-index: -2;
     pointer-events: none; /* 클릭 방해 금지 */
+    transition: background 0.5s ease;
 }
 
 

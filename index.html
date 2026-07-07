@@ -30,7 +30,7 @@
      - class="dark" 대신 data-theme="dark"를 사용하는 이유: 
        HTML5의 커스텀 속성(data-*)을 활용하면 JS 접근이 용이하며, 
        CSS에서도 body[data-theme="dark"]와 같이 상태를 명확히 분리하여 제어할 수 있다. -->
-<body data-theme="dark">
+<body data-theme="light">
     <!-- 스크롤 연동 배경 비디오 및 어두운 오버레이 -->
     <video id="scroll-video" class="bg-video" muted playsinline preload="auto">
         <source src="image/bg-video01-web.mp4" type="video/mp4">
@@ -79,8 +79,15 @@
         <section id="about" class="about-section fade-in">
             <h2 class="section-title">ABOUT ENTITY</h2>
             <article class="about-card">
-                <p><strong>[STATUS]</strong> 익명의 게임 개발자</p>
-                <p><strong>[LOG]</strong> 퍼렁별(Earth)의 게임 몇 가지를 모작하며 시스템을 분석해왔음.</p>
+                <div class="profile-img-container">
+                    <!-- 💡 과제 루브릭: 프로필 이미지와 의미 있는 alt 속성 추가 -->
+                    <!-- JS에서 다크모드/라이트모드에 따라 이미지를 스와핑하기 위해 id="profile-img"를 달아줍니다. -->
+                    <img id="profile-img" src="./image/profile_dark.png" alt="익명의 게임 개발자 프로필 사진" class="profile-img">
+                </div>
+                <div class="about-text">
+                    <p><strong>[STATUS]</strong> 익명의 게임 개발자</p>
+                    <p><strong>[LOG]</strong> 퍼렁별(Earth)의 게임 몇 가지를 모작하며 시스템을 분석해왔음.</p>
+                </div>
             </article>
         </section>
 
