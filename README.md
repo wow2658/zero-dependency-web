@@ -1,4 +1,4 @@
-﻿# 🚀 Zero-Dependency Web Portfolio
+# 🚀 Zero-Dependency Web Portfolio
 
 본 프로젝트는 외부 프레임워크나 라이브러리(React, Vue, jQuery, Bootstrap, Tailwind, Particles.js 등)를 일절 배제하고 **순수 HTML, CSS, JavaScript(Vanilla JS)** 만을 사용하여 구축한 고성능 인터랙티브 포트폴리오 웹사이트입니다.
 
@@ -72,16 +72,16 @@ git clone https://github.com/wow2658/zero-dependency-web.git
 
 본 프로젝트는 모던 프론트엔드 아키텍처와 웹 표준을 철저히 준수하여 설계되었습니다. 과제 평가 기준(15개 항목)에 대한 핵심 설계 의도와 **실제 구현 코드(1:1 라인 매칭)**를 아래와 같이 증빙합니다.
 
-- **1. 모바일 퍼스트 레이아웃 & 반응형 구현 (평가기준 1, 15)**
-  - **모바일 퍼스트:** CSS 파일의 상단에 작성된 모든 기본 스타일은 모바일(작은 화면)을 기준으로 작성하여 초기 렌더링 성능을 극대화했습니다.
-  - **반응형 분기점:** 미디어 쿼리를 선언하여, 화면 크기가 커질 때 데스크톱 뷰로 유연하게(Fluid) 레이아웃이 변환되도록 설계했습니다.
+- **1. 반응형 웹(Responsive Web) 레이아웃 설계 (평가기준 1, 15)**
+  - **데스크톱 퍼스트 (Desktop First):** 현재 코드의 기본 CSS는 넓은 화면(데스크톱)을 기준으로 작성되었습니다. 이는 PC 환경에서의 복잡한 2차원 그리드(Grid) 레이아웃을 우선적으로 안정화하기 위함입니다.
+  - **반응형 분기점 (Media Queries):** `max-width` 미디어 쿼리를 사용하여, 화면이 좁아질 때(태블릿, 모바일) 레이아웃이 1열(Flex)로 유연하게 변환되도록 덮어쓰기(Overwrite) 방식을 사용했습니다.
   ```css
-  /* css/style.css (1~667번째 줄: 모바일 기본 스타일) */
+  /* css/style.css (1~667번째 줄: 데스크톱 기본 스타일) */
   body { font-family: 'Inter', sans-serif; ... }
   
-  /* css/style.css (672번째, 698번째 줄: 반응형 분기점) */
-  @media (max-width: 1024px) { ... }
-  @media (max-width: 768px) { ... }
+  /* css/style.css (672번째, 698번째 줄: 화면이 작아질 때 모바일용으로 덮어쓰기) */
+  @media (max-width: 1024px) { /* 태블릿용 레이아웃 여백 조정 */ }
+  @media (max-width: 768px) { /* 스마트폰용 1열 레이아웃으로 변환 */ }
   ```
 
 - **2. 다크 모드와 LocalStorage (평가기준 2)**
@@ -97,12 +97,24 @@ git clone https://github.com/wow2658/zero-dependency-web.git
   ```
 
 - **3. 인터랙션 및 애니메이션 (평가기준 3)**
-  - **스크롤 애니메이션:** 무거운 스크롤 이벤트 대신 브라우저 네이티브 API인 `IntersectionObserver`를 사용하여 요소가 뷰포트에 20% 진입할 때만 페이드인(Fade-in)을 발생시킵니다.
+  - **스크롤 애니메이션 (동작 원리):** 스크롤을 내려 요소가 화면에 20% 진입하면 JS가 `.visible` 클래스를 붙여주고, CSS의 `transition`이 작동하여 아래에서 위로 부드럽게 떠오르며(Fade-in) 나타나게 만듭니다.
+  ```css
+  /* css/style.css (요소가 숨어있다가 나타나는 CSS 로직) */
+  .fade-in {
+      opacity: 0;
+      transform: translateY(30px); /* 아래로 30px 내려간 상태로 숨김 */
+      transition: all 0.6s ease-out;
+  }
+  .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0); /* 원래 위치로 복귀하며 서서히 등장 */
+  }
+  ```
   ```javascript
-  // js/main.js (1196번째 줄 부근)
+  // js/main.js (1196번째 줄 부근 - 화면 진입 감지기)
   window.scrollObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
+          if (entry.isIntersecting) entry.target.classList.add('visible'); // 화면에 보이면 클래스 추가!
       });
   }, { threshold: 0.2 });
   ```
@@ -130,13 +142,24 @@ git clone https://github.com/wow2658/zero-dependency-web.git
   ```
 
 - **5. 폼 유효성 검사 (평가기준 5)**
-  - **1차 네이티브 및 2차 커스텀 검증:** HTML5 폼 자체에 속성을 지정하여 기본적인 브라우저 검증을 거친 뒤, JS의 이벤트 리스너에서 전송을 멈추고 빈 값 및 이메일 형식을 2차 검사합니다.
+  - **[1차 검증] HTML5 네이티브 속성:** HTML 태그 자체에 `required`와 `type="email"`을 부여하여, 브라우저가 1차적으로 빈 값이나 골뱅이(@) 없는 입력을 튕겨내도록 만들었습니다.
+  ```html
+  <!-- index.html (209번째 줄 부근) -->
+  <form id="contact-form" action="..." method="POST" novalidate>
+      <!-- 브라우저가 자체적으로 이메일 형식을 1차 검사함 -->
+      <input type="email" id="email" required placeholder="이메일 주소">
+  </form>
+  ```
+  - **[2차 검증] JS 커스텀 정규식 검사:** HTML5의 획일화된 알림창 대신 예쁜 커스텀 에러 문구를 띄우기 위해, JS에서 폼 전송을 멈추고(`preventDefault`) 한 번 더 강력하게 검사합니다.
   ```javascript
   // js/main.js (1062번째 줄 부근)
   contactForm.addEventListener('submit', async (e) => {
-      e.preventDefault(); // 기본 폼 전송 차단
+      e.preventDefault(); // 1. 브라우저의 기본 폼 전송 팝업 차단
+      
       const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-      if (!emailPattern.test(emailInput.value)) { /* 에러 문구 노출 */ }
+      if (!emailPattern.test(emailInput.value)) { 
+          // 2. 조건 미달 시 빨간색 커스텀 에러 문구를 화면에 직접 노출
+      }
   });
   ```
 
