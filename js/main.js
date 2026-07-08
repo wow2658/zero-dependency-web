@@ -998,6 +998,9 @@ document.addEventListener('DOMContentLoaded', () => {
             artContainer.style.setProperty('--slider-pos', '50%');
         }
 
+        // 💡 초기 로드 시 첫 번째 작품과 슬라이더 중앙(50%) 정렬 초기화
+        updateArtSet(0);
+
         artPrevBtn.addEventListener('click', () => {
             currentArtIndex = (currentArtIndex - 1 + artSets.length) % artSets.length;
             updateArtSet(currentArtIndex);
@@ -1165,3 +1168,156 @@ document.addEventListener('DOMContentLoaded', () => {
     const fadeElements = document.querySelectorAll('.fade-in');
     fadeElements.forEach(el => window.scrollObserver.observe(el));
 });
+
+// ----------------------------------------------------
+// 13. 순수 바닐라 JS 파티클 시스템 (라이트 모드 전용)
+// ----------------------------------------------------
+const particleCanvas = document.getElementById('vanilla-particles');
+if (particleCanvas) {
+    const ctx = particleCanvas.getContext('2d');
+    let particlesArray;
+
+    function resizeCanvas() {
+        particleCanvas.width = window.innerWidth;
+        particleCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * particleCanvas.width;
+            this.y = Math.random() * particleCanvas.height;
+            this.size = Math.random() * 2 + 1; // 1~3px 크기
+            this.speedX = Math.random() * 1 - 0.5;
+            this.speedY = Math.random() * 1 - 0.5;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            // 💡 마우스 피하기 (Repulse 효과)
+            if (mouse.x != null && mouse.y != null) {
+                let dx = this.x - mouse.x;
+                let dy = this.y - mouse.y;
+                let distanceSq = dx * dx + dy * dy;
+                
+                if (distanceSq < mouse.radius) {
+                    // 밀어내는 힘 계산 (가까울수록 강함)
+                    let distance = Math.sqrt(distanceSq);
+                    let forceDirectionX = dx / distance;
+                    let forceDirectionY = dy / distance;
+                    let force = (mouse.radius - distanceSq) / mouse.radius;
+                    
+                    // 속도에 힘을 더해서 밀려나게 함
+                    this.x += forceDirectionX * force * 5;
+                    this.y += forceDirectionY * force * 5;
+                }
+            }
+
+            if (this.x < 0) this.x = particleCanvas.width;
+            if (this.x > particleCanvas.width) this.x = 0;
+            if (this.y < 0) this.y = particleCanvas.height;
+            if (this.y > particleCanvas.height) this.y = 0;
+        }
+        draw(colorRGB) {
+            ctx.fillStyle = `rgba(${colorRGB}, 0.4)`; // 테마에 따른 색상
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // 마우스 및 터치 좌표 추적 객체
+    let mouse = {
+        x: null,
+        y: null,
+        radius: 20000 // 마우스와 파티클이 연결될 최대 거리(반경)의 제곱
+    };
+
+    window.addEventListener('mousemove', (event) => {
+        mouse.x = event.clientX;
+        mouse.y = event.clientY;
+    });
+
+    // 화면 밖으로 나가면 연결 끊기
+    window.addEventListener('mouseout', () => {
+        mouse.x = null;
+        mouse.y = null;
+    });
+
+    // 모바일 터치 지원
+    window.addEventListener('touchmove', (event) => {
+        mouse.x = event.touches[0].clientX;
+        mouse.y = event.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        mouse.x = null;
+        mouse.y = null;
+    });
+
+    function initParticles() {
+        particlesArray = [];
+        // 화면 해상도에 비례해서 파티클 개수 조절 (적당한 밀도 유지)
+        const numberOfParticles = Math.floor((particleCanvas.width * particleCanvas.height) / 12000);
+        for (let i = 0; i < numberOfParticles; i++) {
+            particlesArray.push(new Particle());
+        }
+    }
+
+    function connectParticles(colorRGB) {
+        for (let a = 0; a < particlesArray.length; a++) {
+            for (let b = a; b < particlesArray.length; b++) {
+                let dx = particlesArray[a].x - particlesArray[b].x;
+                let dy = particlesArray[a].y - particlesArray[b].y;
+                let distance = dx * dx + dy * dy;
+                // 두 점 사이의 거리가 일정 이하일 때만 선 긋기
+                if (distance < 15000) {
+                    const opacityValue = 1 - (distance / 15000);
+                    ctx.strokeStyle = `rgba(${colorRGB}, ${opacityValue * 0.2})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                    ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function animateParticles() {
+        requestAnimationFrame(animateParticles);
+        
+        // 현재 테마에 따라 파티클 색상 결정 (다크모드: 노란색, 라이트모드: 검은색)
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        const colorRGB = isDark ? '255, 234, 0' : '0, 0, 0';
+        
+        ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].update();
+            particlesArray[i].draw(colorRGB);
+        }
+        connectParticles(colorRGB);
+    }
+
+    initParticles();
+    animateParticles();
+
+    // 💡 스크롤에 따른 파티클 숨김 처리 (그림 및 eyeblink 영역 도달 시)
+    window.addEventListener('scroll', () => {
+        const artSection = document.getElementById('2d-art');
+        if (!artSection || !particleCanvas) return;
+
+        // 2D Art 섹션이 뷰포트의 절반쯤 올라왔을 때를 기준으로 삼음
+        const fadePoint = artSection.offsetTop - window.innerHeight * 0.5;
+
+        if (window.scrollY > fadePoint) {
+            // 하단으로 내려가면 강제로 투명하게 만듦 (JS 인라인 스타일 우선)
+            particleCanvas.style.opacity = '0';
+        } else {
+            // 위로 올라가면 인라인 스타일을 제거하여 CSS 상태(라이트모드 1, 다크모드 0)로 복귀
+            particleCanvas.style.opacity = '';
+        }
+    });
+}
