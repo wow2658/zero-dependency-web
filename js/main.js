@@ -277,11 +277,19 @@ if (eyeblinkVideo) {
 // 3. 타자기(Typing) 애니메이션 (Hero 섹션)
 // ----------------------------------------------------
 const typingText = document.querySelector('#typing-text');
-const texts = [
-    "> Accessing Secure Database...",
-    "> Welcome, Agent W.",
-    "> System Override: SUCCESS"
-];
+// 유저 접속 환경을 동적으로 감지하여 텍스트 배열 생성
+function getDynamicTexts() {
+    const isMobile = window.innerWidth <= 768;
+    const deviceName = isMobile ? "MOBILE" : "DESKTOP";
+    const themeName = STATE.isDarkMode ? "DARK_MODE" : "LIGHT_MODE";
+    
+    return [
+        `> User Environment : ${deviceName} Detected.`,
+        `> UI Theme : ${themeName} Active.`,
+        `> Welcome to TA Portfolio : INIT SUCCESS`
+    ];
+}
+let texts = getDynamicTexts();
 let textIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
