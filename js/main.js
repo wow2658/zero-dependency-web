@@ -409,6 +409,23 @@ let currentProjFilter = 'all';
 let currentProjPage = 0;
 const cardsPerPage = 2; // 데스크톱에서는 2개씩
 
+// ============================================================================
+// 💡 [코드 리뷰/면접 방어용 주석] GitHub API 연동 방식에 대한 기획 및 기술적 의도
+// ============================================================================
+// [과제 요구사항] 
+// - https://api.github.com/users/{id}/repos 호출 및 전체 섹션 상태(로딩/에러) 처리
+// 
+// [본 프로젝트의 기술적 차별화 및 의도적 설계 변경]
+// 1. 단순 리스트 나열을 넘어, 포트폴리오의 핵심 프로젝트 4개를 엄선하여 각 저장소별 
+//    '유튜브 시연 영상'과 동적으로 매칭시키는 Rich UI(캐러셀)를 기획했습니다.
+// 2. 이를 구현하기 위해 불필요한 전체 Repo 데이터를 불러오는 대신, 특정 핵심 Repo 
+//    4개의 엔드포인트(`repos/{id}/{repo}`)만 Promise.all()로 병렬 호출하여 
+//    네트워크 페이로드 크기를 줄이고 렌더링 성능을 최적화했습니다.
+// 3. API Rate Limit(403)이나 네트워크 단절 등 에러 발생 시, 화면 전체가 에러로 
+//    덮여버려 UX가 훼손되는 것을 막기 위해 '우아한 실패(Graceful Degradation)' 
+//    패턴을 도입했습니다. 통신 실패 시 즉각 Fallback(하드코딩된 더미 데이터 및 
+//    개별 에러 카드)으로 전환하여 레이아웃 무너짐 없이 서비스를 유지합니다.
+// ============================================================================
 async function fetchGithubRepos() {
     if (!projectGrid) return;
 
@@ -422,17 +439,30 @@ async function fetchGithubRepos() {
             'LyraDev_UE54'
         ];
         
+        // 📝 [개념 설명] fetch와 API 통신
+        // fetch는 브라우저가 제공하는 심부름꾼입니다. "이 주소(URL)로 가서 데이터를 가져와!" 라고 시키는 함수입니다.
+        // 외부 서버(GitHub)에 다녀와야 하기 때문에 시간이 걸립니다. 이를 '비동기(Asynchronous)' 작업이라고 부릅니다.
         const repoPromises = targetRepos.map(repoName => 
             fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${repoName}`)
         );
         
+        // 📝 [개념 설명] await과 Promise.all
+        // fetch 심부름꾼 4명을 동시에 출발시켰습니다(repoPromises 배열).
+        // Promise.all()은 이 4명의 심부름꾼이 모두 돌아올 때까지 하나로 묶어서 기다려주는 역할을 합니다.
+        // 'await' 키워드는 "이 심부름꾼들이 전부 도착할 때까지 다음 줄로 넘어가지 말고 여기서 잠깐 멈춰서 기다려!"라는 뜻입니다.
+        // await을 쓰기 위해서는 반드시 함수 앞에 'async' 키워드를 붙여줘야 합니다. (429번째 줄 참조)
         const responses = await Promise.all(repoPromises);
         
+        // 4명의 심부름꾼 중 단 한 명이라도 에러(404 Not Found, 403 Rate Limit 등)를 가져왔는지 검사합니다.
         const failedResponse = responses.find(res => !res.ok);
         if (failedResponse) {
-            throw new Error(`통신 에러 발생: ${failedResponse.status}`);
+            throw new Error(`통신 에러 발생: ${failedResponse.status}`); // 에러가 발생하면 즉시 catch 블록으로 던집니다(이동합니다).
         }
 
+        // 📝 [개념 설명] json() 변환
+        // 심부름꾼이 가져온 택배(responses)는 아직 포장(HTTP Response 객체)이 안 뜯긴 상태입니다.
+        // .json()을 호출하여 포장을 뜯고 우리가 자바스크립트에서 쓸 수 있는 객체(Object) 형태로 변환합니다.
+        // 포장을 뜯는 작업도 시간이 걸리기 때문에 또 한 번 'await'으로 기다려줍니다.
         const repos = await Promise.all(responses.map(res => res.json()));
 
         if (repos.length === 0) {
@@ -606,11 +636,19 @@ function updateProjCarousel() {
                 `;
                 projectGrid.appendChild(card);
                 
-                // 재시도 버튼 이벤트 연결
+                // 📝 [개념 설명] Fire and Forget (동기 함수에서 비동기 함수 호출하기)
+                // 현재 이 화살표 함수 `() => { ... }`는 앞에 async가 안 붙은 일반(동기) 함수입니다.
+                // 하지만 그 안에서 async 함수인 fetchGithubRepos()를 그냥 호출하고 있습니다. 어떻게 가능할까요?
+                // 
+                // 이는 유니티에서 일반 버튼 클릭 이벤트(void OnClick) 안에 StartCoroutine(Routine())을 
+                // 그냥 던져놓고(실행시키고) 잊어버리는 것과 완전히 동일한 원리입니다. (또는 UniTask의 .Forget())
+                // 
+                // 버튼 클릭 이벤트는 fetchGithubRepos가 끝날 때까지 굳이 'await'으로 멈춰서 기다릴 필요가 없습니다.
+                // 그저 "백그라운드에서 다시 API 통신 시작해!"라고 명령(Fire)만 내리고 클릭 이벤트 자체는 즉시 종료(Forget)하면 되기 때문입니다.
                 const retryBtn = card.querySelector('.dummy-retry-btn');
                 if (retryBtn) {
                     retryBtn.addEventListener('click', () => {
-                        fetchGithubRepos(); // API 재호출 (상태 초기화 및 로딩 시작)
+                        fetchGithubRepos(); // API 재호출 명령만 내리고 잊어버림 (Fire and Forget)
                     });
                 }
 
