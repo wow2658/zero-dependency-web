@@ -404,9 +404,9 @@ if (scrollTopBtn) {
 const GITHUB_USERNAME = 'wow2658';
 const projectGrid = document.querySelector('#project-grid');
 
-let allGithubRepos = [];
-let currentProjFilter = 'all';
-let currentProjPage = 0;
+const STATE = { repos: [], filter: 'all', page: 0 };
+
+
 const cardsPerPage = 2; // 데스크톱에서는 2개씩
 
 // ============================================================================
@@ -497,7 +497,7 @@ async function fetchGithubRepos() {
         };
 
         // 데이터를 정제하여 전역 배열에 저장
-        allGithubRepos = repos.map(repo => {
+        STATE.repos = repos.map(repo => {
             let language = repo.language || 'Classified';
             if (repo.name === 'Unity_OverCooked') language = 'C#';
 
@@ -513,9 +513,9 @@ async function fetchGithubRepos() {
 
         // --- 🎨 UI 시뮬레이션용 더미 데이터 삽입 ---
         // 왼쪽 끝에 로딩->에러 프레임 추가
-        allGithubRepos.push({ isDummyError: true, displayLanguage: 'Dummy' });
+        STATE.repos.push({ isDummyError: true, displayLanguage: 'Dummy' });
         // 오른쪽 끝에 로딩->빈상태 프레임 추가
-        allGithubRepos.push({ isDummyEmpty: true, displayLanguage: 'Dummy' });
+        STATE.repos.push({ isDummyEmpty: true, displayLanguage: 'Dummy' });
         // ---------------------------------------------
 
 
@@ -559,8 +559,8 @@ async function fetchGithubRepos() {
             { name: 'LyraDev_UE54', language: 'C++', html_url: 'https://github.com/gonootago/LyraDev_UE54' }
         ];
 
-        // 👉 1. [상태 변경] 통신 실패 시에도 전역 상태(allGithubRepos) 배열을 가짜 데이터로 덮어씌웁니다.
-        allGithubRepos = fallbackRepos.map(repo => {
+        // 👉 1. [상태 변경] 통신 실패 시에도 전역 상태(STATE.repos) 배열을 가짜 데이터로 덮어씌웁니다.
+        STATE.repos = fallbackRepos.map(repo => {
             let language = repo.language || 'Classified';
             if (repo.name === 'Unity_OverCooked') language = 'C#';
 
@@ -575,8 +575,8 @@ async function fetchGithubRepos() {
         });
 
         // --- 🎨 UI 시뮬레이션용 더미 데이터 삽입 ---
-        allGithubRepos.push({ isDummyError: true, displayLanguage: 'Dummy' });
-        allGithubRepos.push({ isDummyEmpty: true, displayLanguage: 'Dummy' });
+        STATE.repos.push({ isDummyError: true, displayLanguage: 'Dummy' });
+        STATE.repos.push({ isDummyEmpty: true, displayLanguage: 'Dummy' });
 
         // 👉 2. [화면 렌더링] 상태 세팅이 완벽히 끝나면 화면을 그립니다.
         updateProjCarousel();
@@ -588,9 +588,9 @@ function updateProjCarousel() {
     if (!projectGrid) return;
     
     // 1. 필터링
-    let filteredRepos = allGithubRepos;
-    if (currentProjFilter !== 'all') {
-        filteredRepos = allGithubRepos.filter(repo => repo.displayLanguage === currentProjFilter);
+    let filteredRepos = STATE.repos;
+    if (STATE.filter !== 'all') {
+        filteredRepos = STATE.repos.filter(repo => repo.displayLanguage === STATE.filter);
     }
 
     // 2. 모바일/데스크톱 표시 개수
@@ -598,10 +598,10 @@ function updateProjCarousel() {
     const maxPage = Math.max(0, Math.ceil(filteredRepos.length / currentCardsPerPage) - 1);
     
     // 페이지 범위를 벗어나지 않게 보정
-    if (currentProjPage > maxPage) currentProjPage = maxPage;
+    if (STATE.page > maxPage) STATE.page = maxPage;
 
     // 3. 자르기(Pagination Slice)
-    const startIndex = currentProjPage * currentCardsPerPage;
+    const startIndex = STATE.page * currentCardsPerPage;
     const currentSlice = filteredRepos.slice(startIndex, startIndex + currentCardsPerPage);
 
     projectGrid.innerHTML = '';
@@ -714,8 +714,8 @@ function updateProjCarousel() {
     // 4. 버튼 활성/비활성 처리
     const prevBtn = document.getElementById('proj-prev-btn');
     const nextBtn = document.getElementById('proj-next-btn');
-    if (prevBtn) prevBtn.disabled = currentProjPage === 0;
-    if (nextBtn) nextBtn.disabled = currentProjPage >= maxPage;
+    if (prevBtn) prevBtn.disabled = STATE.page === 0;
+    if (nextBtn) nextBtn.disabled = STATE.page >= maxPage;
 }
 
 // 좌우 화살표 이벤트 달기
@@ -723,15 +723,15 @@ const projPrevBtn = document.getElementById('proj-prev-btn');
 const projNextBtn = document.getElementById('proj-next-btn');
 if (projPrevBtn) {
     projPrevBtn.addEventListener('click', () => {
-        if (currentProjPage > 0) {
-            currentProjPage--;
+        if (STATE.page > 0) {
+            STATE.page--;
             updateProjCarousel();
         }
     });
 }
 if (projNextBtn) {
     projNextBtn.addEventListener('click', () => {
-        currentProjPage++;
+        STATE.page++;
         updateProjCarousel();
     });
 }
@@ -752,9 +752,9 @@ filterBtns.forEach(btn => {
         e.target.classList.add('active');
         
         // 👉 1. [상태 변경] DOM(화면)의 요소들을 직접 숨기거나 지우지 않습니다.
-        // 오직 내 머릿속 데이터(currentProjFilter)만 바꿉니다.
-        currentProjFilter = e.target.getAttribute('data-filter');
-        currentProjPage = 0; // 페이지도 1페이지로 리셋
+        // 오직 내 머릿속 데이터(STATE.filter)만 바꿉니다.
+        STATE.filter = e.target.getAttribute('data-filter');
+        STATE.page = 0; // 페이지도 1페이지로 리셋
 
         // 👉 2. [화면 렌더링] 바뀐 상태를 토대로 화면 그리기 전담 반장을 호출합니다.
         updateProjCarousel();
