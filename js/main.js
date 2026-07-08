@@ -279,14 +279,21 @@ if (eyeblinkVideo) {
 const typingText = document.querySelector('#typing-text');
 // 유저 접속 환경을 동적으로 감지하여 텍스트 배열 생성
 function getDynamicTexts() {
-    const isMobile = window.innerWidth <= 768;
-    const deviceName = isMobile ? "MOBILE" : "DESKTOP";
+    const width = window.innerWidth;
+    let deviceName = "DESKTOP";
+    if (width <= 768) {
+        deviceName = "MOBILE";
+    } else if (width <= 1024) {
+        deviceName = "TABLET";
+    }
+
     const themeName = STATE.isDarkMode ? "DARK_MODE" : "LIGHT_MODE";
     
     return [
         `> User Environment : ${deviceName} Detected.`,
         `> UI Theme : ${themeName} Active.`,
-        `> Welcome to TA Portfolio : INIT SUCCESS`
+        `> Role : TECHNICAL ARTIST Portfolio Loaded.`,
+        `> Role : PROGRAMMER Portfolio Loaded.`
     ];
 }
 let texts = getDynamicTexts();
