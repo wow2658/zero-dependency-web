@@ -293,6 +293,8 @@ function getDynamicTexts() {
         `> User Environment : ${deviceName} Detected.`,
         `> UI Theme : ${themeName} Active.`,
         `> Role : TECHNICAL ARTIST Portfolio Loaded.`,
+        `> User Environment : ${deviceName} Detected.`,
+        `> UI Theme : ${themeName} Active.`,
         `> Role : PROGRAMMER Portfolio Loaded.`
     ];
 }
