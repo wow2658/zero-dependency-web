@@ -86,12 +86,17 @@ git clone https://github.com/wow2658/zero-dependency-web.git
 - **Top 버튼:** window.scrollY > 300일 때 나타나도록 설계되었으며, window.scrollTo({ top: 0, behavior: 'smooth' })로 부드러운 이동을 구현했습니다.
 
 ### 4. GitHub API 연동 및 상태 처리 (평가기준 4, 11)
-- **async/await 통신:** 전통적인 콜백이나 단순 .then() 대신, 비동기 제어 흐름을 동기식 코드처럼 읽기 쉽고 안정적으로 관리하기 위해 sync/await을 채택했습니다. 
-- **try/catch 예외 처리:** API 호출 중 403(Rate Limit)이나 네트워크 단절이 발생할 경우를 대비해 	ry/catch 블록으로 예외를 포획하고, 즉각 fallback(더미) 데이터를 화면에 뿌리는 '우아한 실패(Graceful Degradation)'를 구현했습니다.
-- **로딩/성공/에러/빈 상태:** 상태에 따라 DOM(화면)을 덮어씌웁니다. 로딩 중에는 스피너를, 성공 시 프로젝트 카드를, 실패 시 isDummyError, 데이터가 없을 시 isDummyEmpty 플래그를 활용해 시각적 피드백(재시도 버튼 포함)을 명확하게 렌더링합니다.
+- **async/await 통신:** 전통적인 콜백이나 단순 `.then()` 대신, 비동기 제어 흐름을 동기식 코드처럼 읽기 쉽고 안정적으로 관리하기 위해 `async/await`을 채택했습니다. 
+- **try/catch 예외 처리:** API 호출 중 403(Rate Limit)이나 네트워크 단절이 발생할 경우를 대비해 `try/catch` 블록으로 예외를 포획하고, 즉각 fallback(더미) 데이터를 화면에 뿌리는 '우아한 실패(Graceful Degradation)'를 구현했습니다.
+- **구체적인 코드 흐름 (성공/실패 분기):**
+  1. **[로딩 상태]** `try` 블록 진입 직후 `projectGrid.innerHTML = '<div class="loading-spinner">...'`를 통해 로딩 UI를 화면에 즉시 렌더링합니다.
+  2. **[API 호출]** `await Promise.all(repoPromises)`를 통해 4개의 레포지토리 데이터를 병렬로 기다립니다.
+  3. **[에러 Throw]** 배열 내 응답 중 단 하나라도 상태가 정상이 아니면(`!res.ok`), `throw new Error()`를 발생시켜 즉각적으로 하단의 `catch` 블록으로 흐름을 이동시킵니다.
+  4. **[성공 분기 - 데이터 할당]** 모든 통신이 성공(`200 OK`)하면, 데이터를 `.json()`으로 파싱하여 전역 객체 `STATE.repos`에 할당하고 `updateProjCarousel()`을 호출해 정상 화면을 출력합니다.
+  5. **[실패 분기 - 우아한 실패 처리]** `catch (error)` 블록에서는 에러를 안전하게 포획한 뒤, 미리 준비된 예비 데이터(`fallbackRepos`)와 에러 UI용 더미 객체(`isDummyError`)를 `STATE.repos`에 덮어씌웁니다. 이후 렌더링 함수를 호출하여, 시스템이 죽지 않고 사용자에게 안전하게 에러 프레임과 '재시도' 버튼을 보여주도록 분기 처리했습니다.
 
 ### 5. 폼 유효성 검사 (평가기준 5)
-- HTML5의 equired 속성과 <input type="email">을 통한 1차 네이티브 검증을 수행하고, 자바스크립트의 submit 이벤트 리스너 내부에서 e.preventDefault()로 폼 전송을 막은 뒤 직접 2차 유효성(빈 값, 이메일 정규식 패턴)을 검사합니다. 
+- HTML5의 equired 속성과 <input type="email">을 통한 1차 네이티브 검증을 수행하고, 자바스크립트의 submit 이벤트 리스너 내부에서 e.preventDefault()로 폼 전송을 막은 뒤 직접 2차 유효성(빈 값, 이메일 정규식 패턴)을 검사합니다. 
 - 오류 발생 시 span.error-msg 요소에 즉각적으로 빨간색 텍스트로 에러 원인을 노출시켜 사용자 경험(UX)을 향상시켰습니다.
 
 ### 6. HTML, CSS, JavaScript 파일 분리 및 시맨틱 웹 (평가기준 6, 7)
