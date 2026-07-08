@@ -392,10 +392,17 @@ section {
     margin: 0 auto;
 }
 
-/* GitHub(PROGRAMMING) 영역만 2열 캐러셀 구조로 유지 */
+/* 💡 [Mobile First 아키텍처 적용] 기본은 모바일 환경에 맞게 1열(1fr) 유지 */
 #project-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     max-width: 100%;
+}
+
+/* 💡 [Mobile First 증명용 코드] 화면이 커지면(PC/태블릿) 2열로 확장 */
+@media (min-width: 769px) {
+    #project-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .proj-nav-btn {
