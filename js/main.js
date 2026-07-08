@@ -65,8 +65,17 @@ const savedTheme = localStorage.getItem('portfolio_theme');
 // - 만약 "savedTheme === 'light' ? false : true" 로 짰다면: null은 'light'가 아니므로 무조건 뒤의 true(다크모드)가 기본값이 됩니다.
 // - 하지만 "savedTheme === 'dark' ? true : false" 로 짜면: null은 'dark'가 아니므로 무조건 뒤의 false(라이트모드)가 기본값이 됩니다.
 // - 💡 즉, "명시적으로 다크모드('dark')를 선택한 유저가 아니면, 첫 방문자(null)를 포함한 나머지는 싹 다 라이트모드로 밀어버리겠다"는 실무 테크닉입니다.
+let initialDarkMode = false;
+if (savedTheme) {
+    // 1. 유저가 이전에 선택한 테마가 있다면 그걸 최우선으로 따름
+    initialDarkMode = savedTheme === 'dark';
+} else {
+    // 2. 저장된 테마가 없다면 (첫 방문), 사용자 기기의 시스템 설정(다크모드 여부)을 감지
+    initialDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 const STATE = {
-    isDarkMode: savedTheme === 'dark' ? true : false 
+    isDarkMode: initialDarkMode
 };
 
 // ----------------------------------------------------
@@ -110,8 +119,8 @@ function renderTheme() {
         // 💡 하드디스크 캐비닛에 "이 유저는 현재 라이트모드임!" 이라고 영구 도장을 찍어둠
         localStorage.setItem('portfolio_theme', 'light'); 
         
-        // 라이트모드 시 렌더링 중지 및 일시정지 (CPU, 배터리 최적화)
-        if (eyeblink) eyeblink.pause();
+        // 💡 유저 요청: 라이트모드에서도 이스터에그처럼 눈알이 깜빡이도록 비디오 일시정지 해제
+        if (eyeblink && eyeblink.paused) eyeblink.play().catch(()=>{});
     }
 }
 
@@ -320,3 +329,822 @@ if(skillBars.length > 0) {
     setTimeout(randomizeSkills, 500);    // 초기 애니메이션
     setInterval(randomizeSkills, 2000);  // 2초마다 게이지 변동
 }
+
+// ----------------------------------------------------
+// 5. 모바일 햄버거 메뉴 및 위로 가기 버튼 로직
+// ----------------------------------------------------
+const mobileMenuBtn = document.querySelector('#mobile-menu-btn');
+const navLinks = document.querySelector('.nav-links');
+const scrollTopBtn = document.querySelector('#scroll-top-btn');
+
+// 5-1. 햄버거 메뉴 토글 로직
+if (mobileMenuBtn && navLinks) {
+    // 햄버거 버튼 클릭 시 메뉴 열기/닫기
+    mobileMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 버튼 클릭이 document로 전파되는 것 방지
+        navLinks.classList.toggle('active');
+    });
+
+    // 💡 유저 요청: 외부(다른 곳) 클릭 시 메뉴 알아서 사라지게 하기
+    document.addEventListener('click', (e) => {
+        // 메뉴가 열려있고, 클릭한 타겟이 메뉴 내부가 아닐 때 닫기
+        if (navLinks.classList.contains('active') && !navLinks.contains(e.target)) {
+            navLinks.classList.remove('active');
+        }
+    });
+
+    // 메뉴 안의 링크(Home, About 등)를 클릭해서 페이지가 이동할 때도 깔끔하게 닫아주기
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+        });
+    });
+}
+
+// 5-2. 위로 가기 버튼 스크롤 감지 및 클릭 로직
+if (scrollTopBtn) {
+    window.addEventListener('scroll', () => {
+        // 스크롤을 300px 이상 내렸을 때만 버튼을 화면에 표시
+        if (window.scrollY > 300) {
+            scrollTopBtn.classList.add('visible');
+        } else {
+            scrollTopBtn.classList.remove('visible');
+        }
+    });
+
+    scrollTopBtn.addEventListener('click', () => {
+        // 부드럽게 화면 맨 위(top: 0)로 스크롤 이동
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+// ----------------------------------------------------
+// 6. GitHub API 연동 (비동기 통신)
+// ----------------------------------------------------
+const GITHUB_USERNAME = 'wow2658';
+const projectGrid = document.querySelector('#project-grid');
+
+let allGithubRepos = [];
+let currentProjFilter = 'all';
+let currentProjPage = 0;
+const cardsPerPage = 2; // 데스크톱에서는 2개씩
+
+async function fetchGithubRepos() {
+    if (!projectGrid) return;
+
+    try {
+        projectGrid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 데이터 로딩 중...</div>';
+
+        const targetRepos = [
+            'Unreal_IROAS', 
+            'Unreal_Left4Dead2', 
+            'Unity_OverCooked', 
+            'LyraDev_UE54'
+        ];
+        
+        const repoPromises = targetRepos.map(repoName => 
+            fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${repoName}`)
+        );
+        
+        const responses = await Promise.all(repoPromises);
+        
+        const failedResponse = responses.find(res => !res.ok);
+        if (failedResponse) {
+            throw new Error(`통신 에러 발생: ${failedResponse.status}`);
+        }
+
+        const repos = await Promise.all(responses.map(res => res.json()));
+
+        if (repos.length === 0) {
+            projectGrid.innerHTML = '<div class="error-message">공개된 Repository가 없습니다.</div>';
+            return;
+        }
+
+        const YOUTUBE_LINKS = {
+            'Unreal_IROAS': 'ggYh9wlE8G4',
+            'Unreal_Left4Dead2': 'Y8r53TZZkIY',
+            'Unity_OverCooked': 'NUkG66NQ4tA',
+            'LyraDev_UE54': 'fYhED5rY9Uo'
+        };
+
+        const REPO_METADATA = {
+            'Unreal_IROAS': {
+                title: 'Unreal5 VR',
+                description: 'Boss, enemy 프로그래밍, 시네마틱 담당'
+            },
+            'Unreal_Left4Dead2': {
+                title: 'Unreal5 멀티FPS',
+                description: 'Player, 시네마틱 담당'
+            },
+            'Unity_OverCooked': {
+                title: 'Unity 탑뷰 파티',
+                description: '프로그래밍 담당'
+            },
+            'LyraDev_UE54': {
+                title: 'Unreal5 Lyra',
+                description: '멀티 TPS 프로그래밍, 레벨디자인'
+            }
+        };
+
+        // 데이터를 정제하여 전역 배열에 저장
+        allGithubRepos = repos.map(repo => {
+            let language = repo.language || 'Classified';
+            if (repo.name === 'Unity_OverCooked') language = 'C#';
+
+            const meta = REPO_METADATA[repo.name] || {};
+            return {
+                ...repo,
+                displayLanguage: language,
+                youtubeId: YOUTUBE_LINKS[repo.name],
+                displayName: meta.title || repo.name,
+                displayDesc: meta.description || repo.description || '상세 정보가 업데이트 중입니다.'
+            };
+        });
+
+        // --- 🎨 UI 시뮬레이션용 더미 데이터 삽입 ---
+        // 왼쪽 끝에 로딩->에러 프레임 추가
+        allGithubRepos.push({ isDummyError: true, displayLanguage: 'Dummy' });
+        // 오른쪽 끝에 로딩->빈상태 프레임 추가
+        allGithubRepos.push({ isDummyEmpty: true, displayLanguage: 'Dummy' });
+        // ---------------------------------------------
+
+
+        // 렌더링 함수 최초 호출
+        updateProjCarousel();
+
+    } catch (error) {
+        console.warn('GitHub API Error (Rate Limit). Using fallback data...', error);
+        
+        const YOUTUBE_LINKS = {
+            'Unreal_IROAS': 'ggYh9wlE8G4',
+            'Unreal_Left4Dead2': 'Y8r53TZZkIY',
+            'Unity_OverCooked': 'NUkG66NQ4tA',
+            'LyraDev_UE54': 'fYhED5rY9Uo'
+        };
+
+        const REPO_METADATA = {
+            'Unreal_IROAS': {
+                title: 'Unreal5 VR',
+                description: 'Boss, enemy 프로그래밍, 시네마틱 담당'
+            },
+            'Unreal_Left4Dead2': {
+                title: 'Unreal5 멀티FPS',
+                description: 'Player, 시네마틱 담당'
+            },
+            'Unity_OverCooked': {
+                title: 'Unity 탑뷰 파티',
+                description: '프로그래밍 담당'
+            },
+            'LyraDev_UE54': {
+                title: 'Unreal5 Lyra',
+                description: '멀티 TPS 프로그래밍, 레벨디자인'
+            }
+        };
+
+        // 차단 시 임시로 보여줄 폴백(Fallback) 하드코딩 데이터
+        const fallbackRepos = [
+            { name: 'Unreal_IROAS', language: 'C++', html_url: 'https://github.com/gonootago/Unreal_IROAS' },
+            { name: 'Unreal_Left4Dead2', language: 'C++', html_url: 'https://github.com/gonootago/Unreal_Left4Dead2' },
+            { name: 'Unity_OverCooked', language: 'C#', html_url: 'https://github.com/gonootago/Unity_OverCooked' },
+            { name: 'LyraDev_UE54', language: 'C++', html_url: 'https://github.com/gonootago/LyraDev_UE54' }
+        ];
+
+        // 👉 1. [상태 변경] 통신 실패 시에도 전역 상태(allGithubRepos) 배열을 가짜 데이터로 덮어씌웁니다.
+        allGithubRepos = fallbackRepos.map(repo => {
+            let language = repo.language || 'Classified';
+            if (repo.name === 'Unity_OverCooked') language = 'C#';
+
+            const meta = REPO_METADATA[repo.name] || {};
+            return {
+                ...repo,
+                displayLanguage: language,
+                youtubeId: YOUTUBE_LINKS[repo.name],
+                displayName: meta.title || repo.name,
+                displayDesc: meta.description || repo.description || '상세 정보가 업데이트 중입니다.'
+            };
+        });
+
+        // --- 🎨 UI 시뮬레이션용 더미 데이터 삽입 ---
+        allGithubRepos.push({ isDummyError: true, displayLanguage: 'Dummy' });
+        allGithubRepos.push({ isDummyEmpty: true, displayLanguage: 'Dummy' });
+
+        // 👉 2. [화면 렌더링] 상태 세팅이 완벽히 끝나면 화면을 그립니다.
+        updateProjCarousel();
+    }
+}
+
+// 필터 및 페이지네이션을 적용하여 화면을 그리는 함수
+function updateProjCarousel() {
+    if (!projectGrid) return;
+    
+    // 1. 필터링
+    let filteredRepos = allGithubRepos;
+    if (currentProjFilter !== 'all') {
+        filteredRepos = allGithubRepos.filter(repo => repo.displayLanguage === currentProjFilter);
+    }
+
+    // 2. 모바일/데스크톱 표시 개수
+    const currentCardsPerPage = window.innerWidth <= 768 ? 1 : cardsPerPage;
+    const maxPage = Math.max(0, Math.ceil(filteredRepos.length / currentCardsPerPage) - 1);
+    
+    // 페이지 범위를 벗어나지 않게 보정
+    if (currentProjPage > maxPage) currentProjPage = maxPage;
+
+    // 3. 자르기(Pagination Slice)
+    const startIndex = currentProjPage * currentCardsPerPage;
+    const currentSlice = filteredRepos.slice(startIndex, startIndex + currentCardsPerPage);
+
+    projectGrid.innerHTML = '';
+
+    if (currentSlice.length === 0) {
+        projectGrid.innerHTML = '<div class="error-message">해당 조건의 프로젝트가 없습니다.</div>';
+    } else {
+        currentSlice.forEach(repo => {
+            // ES6 구조분해 할당 (Destructuring Assignment) 적용
+            const { youtubeId, displayName, displayDesc, displayLanguage, html_url, isDummyError, isDummyEmpty } = repo;
+
+            // 시맨틱 태그(article) 적용
+            const card = document.createElement('article');
+            card.className = 'project-card fade-in';
+            if (window.scrollObserver) window.scrollObserver.observe(card);
+
+            if (isDummyError) {
+                card.innerHTML = `
+                    <div class="dummy-loader" style="height: 100%; min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: #888;"></i>
+                        <p style="color: #888;">데이터를 불러오는 중...</p>
+                    </div>
+                    <div class="dummy-content" style="display: none; height: 100%; min-height: 300px; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--accent-danger);"></i>
+                        <h3 style="margin-bottom: 0.5rem; color: var(--accent-danger);">API 호출 실패</h3>
+                        <p style="font-size: 0.95rem; color: #aaa; margin-bottom: 1rem; line-height: 1.5;">
+                            인증 없는 API 호출로 인해 <strong>시간당 60회 제한(Rate Limit)</strong>을 초과하여 <br>
+                            <span style="color: var(--accent-danger);">403 Forbidden 응답</span>을 받았습니다.
+                        </p>
+                        <button class="btn outline-btn dummy-retry-btn" style="margin-top: 1.5rem; border-color: var(--accent-danger); color: var(--accent-danger);">재시도</button>
+                    </div>
+                `;
+                projectGrid.appendChild(card);
+                
+                // 재시도 버튼 이벤트 연결
+                const retryBtn = card.querySelector('.dummy-retry-btn');
+                if (retryBtn) {
+                    retryBtn.addEventListener('click', () => {
+                        fetchGithubRepos(); // API 재호출 (상태 초기화 및 로딩 시작)
+                    });
+                }
+
+                // 1.5초 후 로딩 -> 에러 상태로 전환 (시뮬레이션)
+                setTimeout(() => {
+                    const loader = card.querySelector('.dummy-loader');
+                    const content = card.querySelector('.dummy-content');
+                    if (loader && content) {
+                        loader.style.display = 'none';
+                        content.style.display = 'flex';
+                    }
+                }, 1500);
+                return;
+            }
+
+            if (isDummyEmpty) {
+                card.innerHTML = `
+                    <div class="dummy-loader" style="height: 100%; min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: #888;"></i>
+                        <p style="color: #888;">데이터를 불러오는 중...</p>
+                    </div>
+                    <div class="dummy-content" style="display: none; height: 100%; min-height: 300px; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem;">
+                        <i class="fas fa-folder-open" style="font-size: 2.5rem; margin-bottom: 1rem; color: #666;"></i>
+                        <h3 style="margin-bottom: 0.5rem; color: #888;">프로젝트 없음</h3>
+                        <p style="font-size: 0.9rem; color: #666;">해당 카테고리에 등록된<br>공개 레포지토리가 없습니다.</p>
+                    </div>
+                `;
+                projectGrid.appendChild(card);
+                
+                // 1.5초 후 로딩 -> 빈 상태로 전환 (시뮬레이션)
+                setTimeout(() => {
+                    const loader = card.querySelector('.dummy-loader');
+                    const content = card.querySelector('.dummy-content');
+                    if (loader && content) {
+                        loader.style.display = 'none';
+                        content.style.display = 'flex';
+                    }
+                }, 1500);
+                return;
+            }
+            
+            const videoHtml = youtubeId 
+                ? `<div class="project-video"><iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>` 
+                : '';
+
+            card.innerHTML = `
+                ${videoHtml}
+                <div class="project-info">
+                    <h3>${displayName}</h3>
+                    <p>${displayDesc}</p>
+                    <div class="project-tags">
+                        <span class="tag">${displayLanguage}</span>
+                    </div>
+                </div>
+                <div class="project-links">
+                    <a href="${html_url}" target="_blank" class="btn outline-btn">VIEW CODE</a>
+                </div>
+            `;
+            projectGrid.appendChild(card);
+        });
+    }
+
+    // 4. 버튼 활성/비활성 처리
+    const prevBtn = document.getElementById('proj-prev-btn');
+    const nextBtn = document.getElementById('proj-next-btn');
+    if (prevBtn) prevBtn.disabled = currentProjPage === 0;
+    if (nextBtn) nextBtn.disabled = currentProjPage >= maxPage;
+}
+
+// 좌우 화살표 이벤트 달기
+const projPrevBtn = document.getElementById('proj-prev-btn');
+const projNextBtn = document.getElementById('proj-next-btn');
+if (projPrevBtn) {
+    projPrevBtn.addEventListener('click', () => {
+        if (currentProjPage > 0) {
+            currentProjPage--;
+            updateProjCarousel();
+        }
+    });
+}
+if (projNextBtn) {
+    projNextBtn.addEventListener('click', () => {
+        currentProjPage++;
+        updateProjCarousel();
+    });
+}
+
+// 화면 크기가 변할 때 페이지 재계산 (반응형 대응)
+window.addEventListener('resize', () => {
+    updateProjCarousel();
+});
+
+// 필터 버튼 이벤트 달기 (상태 관리 패턴 적용)
+// 💡 [이벤트 -> 상태 -> 렌더링] 흐름의 두 번째 예시입니다.
+const filterBtns = document.querySelectorAll('.filter-btn');
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // 기존 active 클래스 제거
+        filterBtns.forEach(b => b.classList.remove('active'));
+        // 누른 버튼에 active 추가
+        e.target.classList.add('active');
+        
+        // 👉 1. [상태 변경] DOM(화면)의 요소들을 직접 숨기거나 지우지 않습니다.
+        // 오직 내 머릿속 데이터(currentProjFilter)만 바꿉니다.
+        currentProjFilter = e.target.getAttribute('data-filter');
+        currentProjPage = 0; // 페이지도 1페이지로 리셋
+
+        // 👉 2. [화면 렌더링] 바뀐 상태를 토대로 화면 그리기 전담 반장을 호출합니다.
+        updateProjCarousel();
+    });
+});
+
+// 시작
+fetchGithubRepos();
+
+// ----------------------------------------------------
+// 7. TA Effect 갤러리 및 시네마틱 라이트박스 로직 (고도화)
+// ----------------------------------------------------
+const effectGrid = document.querySelector('#ta-effect-grid');
+const lightboxModal = document.querySelector('#lightbox-modal');
+const lightboxImg = document.querySelector('#lightbox-img');
+const lightboxCaption = document.querySelector('#lightbox-caption');
+const lightboxClose = document.querySelector('.lightbox-close');
+const lightboxPrev = document.querySelector('.lightbox-prev');
+const lightboxNext = document.querySelector('.lightbox-next');
+const lightboxFullscreen = document.querySelector('.lightbox-fullscreen');
+
+// 현재 보고 있는 이미지 인덱스
+let currentLightboxIndex = 0;
+
+// WebP 및 PNG 이펙트 슬라이드 전체 목록
+const effectImages = [
+    { src: './image/effect/슬라이드20.PNG', caption: '이펙트 포트폴리오 슬라이드 20' },
+    { src: './image/effect/슬라이드21페이지.webp', caption: '이펙트 포트폴리오 슬라이드 21' },
+    { src: './image/effect/슬라이드22페이지.webp', caption: '이펙트 포트폴리오 슬라이드 22' },
+    { src: './image/effect/슬라이드23페이지.webp', caption: '이펙트 포트폴리오 슬라이드 23' },
+    { src: './image/effect/슬라이드24.PNG', caption: '이펙트 포트폴리오 슬라이드 24' },
+    { src: './image/effect/슬라이드25페이지.webp', caption: '이펙트 포트폴리오 슬라이드 25' },
+    { src: './image/effect/슬라이드26.PNG', caption: '이펙트 포트폴리오 슬라이드 26' },
+    { src: './image/effect/슬라이드27.PNG', caption: '이펙트 포트폴리오 슬라이드 27' },
+    { src: './image/effect/슬라이드28.PNG', caption: '이펙트 포트폴리오 슬라이드 28' },
+    { src: './image/effect/슬라이드37.PNG', caption: '이펙트 포트폴리오 슬라이드 37' },
+    { src: './image/effect/슬라이드38.PNG', caption: '이펙트 포트폴리오 슬라이드 38' },
+    { src: './image/effect/슬라이드39.PNG', caption: '이펙트 포트폴리오 슬라이드 39' },
+    { src: './image/effect/슬라이드40.PNG', caption: '이펙트 포트폴리오 슬라이드 40' }
+];
+
+// 특정 인덱스의 이미지를 라이트박스에 세팅하는 함수
+function showLightboxImage(index) {
+    if (index < 0) index = effectImages.length - 1; // 처음에서 이전 누르면 끝으로 루프
+    if (index >= effectImages.length) index = 0; // 끝에서 다음 누르면 처음으로 루프
+    
+    currentLightboxIndex = index;
+    lightboxImg.src = effectImages[index].src;
+    lightboxCaption.textContent = effectImages[index].caption;
+}
+
+// 라이트박스를 닫는 실제 내부 함수
+function closeLightbox() {
+    lightboxModal.style.display = 'none';
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    }
+    document.body.style.overflow = 'auto'; // 스크롤 잠금 해제
+    
+    // 라이트박스 모드 초기화 (이미지 뷰어 복원)
+    const customWrapper = document.getElementById('lightbox-custom-wrapper');
+    const lightboxImageContainer = document.querySelector('.lightbox-image-container');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxControls = document.querySelectorAll('.lightbox-prev, .lightbox-next');
+    
+    if (customWrapper) {
+        customWrapper.style.display = 'none';
+        customWrapper.innerHTML = '';
+    }
+    if (lightboxImg) lightboxImg.style.display = 'block';
+    lightboxControls.forEach(el => el.style.display = '');
+}
+
+// 사용자가 X버튼이나 배경을 눌러서 닫기를 '요청'하는 함수 (히스토리 정리 포함)
+function requestCloseLightbox() {
+    if (history.state && history.state.lightbox) {
+        history.back(); // 이 액션이 popstate 이벤트를 발생시켜 안전하게 닫힘
+    } else {
+        closeLightbox();
+    }
+}
+
+// 현재 인라인 카드에서 보고 있는 인덱스
+let inlineGalleryIndex = 0;
+
+function renderEffectGallery() {
+    if (!effectGrid) return;
+    effectGrid.innerHTML = ''; // 초기화
+
+    // 스크롤 압박을 줄이기 위한 대표 카드 생성
+    const card = document.createElement('div');
+    card.className = 'project-card gallery-card fade-in';
+    if (window.scrollObserver) window.scrollObserver.observe(card);
+    
+    // 썸네일 이미지
+    const img = document.createElement('img');
+    img.src = effectImages[inlineGalleryIndex].src;
+    img.alt = effectImages[inlineGalleryIndex].caption;
+    card.appendChild(img);
+    
+    // 카드 내장(Inline) 좌우 화살표 생성
+    const inlinePrev = document.createElement('span');
+    inlinePrev.innerHTML = '&#10094;';
+    inlinePrev.className = 'inline-prev';
+    card.appendChild(inlinePrev);
+
+    const inlineNext = document.createElement('span');
+    inlineNext.innerHTML = '&#10095;';
+    inlineNext.className = 'inline-next';
+    card.appendChild(inlineNext);
+    
+    // 우측 하단 슬라이드 장수 표시 (캡슐 오버레이 제거, 단순 텍스트화)
+    const badge = document.createElement('div');
+    badge.className = 'inline-badge';
+    badge.textContent = `1 / ${effectImages.length}`;
+    card.appendChild(badge);
+    
+    // 인라인 화살표 클릭 이벤트 (이전)
+    inlinePrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        inlineGalleryIndex--;
+        if (inlineGalleryIndex < 0) inlineGalleryIndex = effectImages.length - 1;
+        updateInlineGallery();
+    });
+
+    // 인라인 화살표 클릭 이벤트 (다음)
+    inlineNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        inlineGalleryIndex++;
+        if (inlineGalleryIndex >= effectImages.length) inlineGalleryIndex = 0;
+        updateInlineGallery();
+    });
+
+    // 인라인 갤러리 이미지 업데이트 함수
+    function updateInlineGallery() {
+        img.src = effectImages[inlineGalleryIndex].src;
+        img.alt = effectImages[inlineGalleryIndex].caption;
+        badge.textContent = `${inlineGalleryIndex + 1} / ${effectImages.length}`;
+    }
+    
+    // 카드 자체(또는 이미지) 클릭 시 라이트박스 오픈 및 전체화면(PC/모바일 공통)
+    card.addEventListener('click', () => {
+        showLightboxImage(inlineGalleryIndex); // 현재 인라인에서 보던 인덱스부터 오픈
+        lightboxModal.style.display = 'block';
+        history.pushState({ lightbox: true }, '', '#lightbox');
+
+        // PC/모바일 상관없이 넷플릭스처럼 무조건 자동 전체화면 실행
+        if (lightboxModal.requestFullscreen) {
+            lightboxModal.requestFullscreen().then(() => {
+                // 전체화면 진입 성공 시 가능하면 가로 모드(Landscape)로 강제 고정 시도 (주로 모바일)
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(err => {
+                        console.log('가로모드 고정 미지원 기기:', err);
+                    });
+                }
+            }).catch(err => {
+                console.error('자동 전체화면 에러:', err);
+            });
+        }
+    });
+    
+    effectGrid.appendChild(card);
+}
+
+// --- 이벤트 리스너 등록 ---
+if (lightboxModal) {
+    // 좌우 화살표 클릭
+    if (lightboxPrev) {
+        lightboxPrev.addEventListener('click', (e) => {
+            e.stopPropagation(); // 모달 닫힘(배경 클릭) 방지
+            showLightboxImage(currentLightboxIndex - 1);
+        });
+    }
+    if (lightboxNext) {
+        lightboxNext.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showLightboxImage(currentLightboxIndex + 1);
+        });
+    }
+
+    // 전체화면 버튼 클릭
+    if (lightboxFullscreen) {
+        lightboxFullscreen.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!document.fullscreenElement) {
+                lightboxModal.requestFullscreen().catch(err => {
+                    console.error(`전체화면 에러: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+    }
+
+    // 닫기 버튼 클릭
+    if (lightboxClose) {
+        lightboxClose.addEventListener('click', requestCloseLightbox);
+    }
+
+    // 팝업 바깥쪽(검은 배경 및 여백)을 클릭해도 닫히도록 설정
+    window.addEventListener('click', (e) => {
+        // 모달 배경이거나, 이미지 바깥의 래퍼들을 클릭했을 때만 닫기
+        if (e.target === lightboxModal || 
+            e.target.classList.contains('lightbox-content-wrapper') || 
+            e.target.classList.contains('lightbox-image-container')) {
+            requestCloseLightbox();
+        }
+    });
+
+    // 키보드 연동 (ESC로 닫기, 좌우 화살표로 넘기기)
+    window.addEventListener('keydown', (e) => {
+        if (lightboxModal.style.display === 'block') {
+            if (e.key === 'Escape') {
+                requestCloseLightbox();
+            } else if (e.key === 'ArrowLeft') {
+                showLightboxImage(currentLightboxIndex - 1);
+            } else if (e.key === 'ArrowRight') {
+                showLightboxImage(currentLightboxIndex + 1);
+            }
+        }
+    });
+
+    // 모바일 기기 뒤로가기 방어 로직 (History API)
+    window.addEventListener('popstate', (e) => {
+        // 뒤로가기를 눌러서 lightbox 상태가 빠졌을 때 라이트박스 닫기
+        if (!e.state || !e.state.lightbox) {
+            closeLightbox();
+        }
+    });
+}
+
+// 갤러리 렌더링 실행
+renderEffectGallery();
+
+// ----------------------------------------------------
+// 9. 3D 애니메이션 포트폴리오 순차 재생 (Sequential Video Playback)
+// ----------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const animVideo = document.getElementById('ta-anim-video');
+    if (animVideo) {
+        const animSources = [
+            './image/3danimation/Gif6.webm',
+            './image/3danimation/Gif8.webm'
+        ];
+        let currentAnimIndex = 0;
+
+        animVideo.addEventListener('ended', () => {
+            currentAnimIndex = (currentAnimIndex + 1) % animSources.length;
+            animVideo.src = animSources[currentAnimIndex];
+            animVideo.play().catch(e => console.error('비디오 순차재생 에러:', e));
+        });
+    }
+});
+
+// ----------------------------------------------------
+// 10. Image Comparison Slider 로직 (2D Art & Design)
+// ----------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const artBaseImg = document.getElementById('art-base-img');
+    const artOverlayImg = document.getElementById('art-overlay-img');
+    const artPrevBtn = document.getElementById('art-prev-btn');
+    const artNextBtn = document.getElementById('art-next-btn');
+    const artSlider = document.getElementById('art-slider-range');
+    const artContainer = document.getElementById('art-comparison-container');
+
+    if (artBaseImg && artOverlayImg && artPrevBtn && artNextBtn && artSlider) {
+        const artSets = [
+            { after: './image/2dart/1-1.webp', before: './image/2dart/1-2.webp' },
+            { after: './image/2dart/2-1.jpg', before: './image/2dart/2-2.jpg' },
+            { after: './image/2dart/3-1.jpg', before: './image/2dart/3-2.jpg' }
+        ];
+        let currentArtIndex = 0;
+
+        function updateArtSet(index) {
+            artOverlayImg.src = artSets[index].after;
+            artBaseImg.src = artSets[index].before;
+            // 작품을 바꿀 때마다 슬라이더를 중앙(50%)으로 리셋하여 둘 다 보이게 함
+            artSlider.value = 50;
+            artContainer.style.setProperty('--slider-pos', '50%');
+        }
+
+        artPrevBtn.addEventListener('click', () => {
+            currentArtIndex = (currentArtIndex - 1 + artSets.length) % artSets.length;
+            updateArtSet(currentArtIndex);
+        });
+
+        artNextBtn.addEventListener('click', () => {
+            currentArtIndex = (currentArtIndex + 1) % artSets.length;
+            updateArtSet(currentArtIndex);
+        });
+
+        artSlider.addEventListener('input', (e) => {
+            artContainer.style.setProperty('--slider-pos', e.target.value + '%');
+        });
+    }
+});
+
+// ----------------------------------------------------
+// 12. Contact Form Validation (문의 폼 유효성 검증)
+// ----------------------------------------------------
+// 💡 [이벤트 -> 상태 -> 렌더링] 흐름의 마지막 예시입니다.
+const contactForm = document.getElementById('contact-form');
+if (contactForm) {
+    contactForm.addEventListener('submit', (event) => {
+        // 1. [이벤트 차단] 기본 제출 동작 방지 (페이지 새로고침 방지)
+        event.preventDefault();
+        
+        // 👉 2. [상태 선언] isValid 라는 데이터 상태를 먼저 만듭니다.
+        
+        // 2. 이름 검증 (빈 필드 불가)
+        const nameInput = document.getElementById('name');
+        const nameError = document.getElementById('name-error');
+        if (!nameInput.value.trim()) {
+            nameError.textContent = '이름을 입력해주세요.';
+            nameError.style.display = 'block';
+            isValid = false;
+        } else {
+            nameError.style.display = 'none';
+        }
+        
+        // 3. 이메일 검증 (빈 필드 불가 및 정규식)
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('email-error');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // 간단한 이메일 정규식
+        
+        if (!emailInput.value.trim()) {
+            emailError.textContent = '이메일을 입력해주세요.';
+            emailError.style.display = 'block';
+            isValid = false;
+        } else if (!emailRegex.test(emailInput.value.trim())) {
+            emailError.textContent = '올바른 이메일 형식이 아닙니다.';
+            emailError.style.display = 'block';
+            isValid = false;
+        } else {
+            emailError.style.display = 'none';
+        }
+        
+        // 4. 메시지 검증 (빈 필드 불가)
+        const messageInput = document.getElementById('message');
+        const messageError = document.getElementById('message-error');
+        if (!messageInput.value.trim()) {
+            messageError.textContent = '메시지를 입력해주세요.';
+            messageError.style.display = 'block';
+            isValid = false;
+        } else {
+            messageError.style.display = 'none';
+        }
+        
+        // 5. 검증 통과 시 성공 처리 및 실제 메일 발송 (AJAX)
+        if (isValid) {
+            const submitBtn = contactForm.querySelector('.submit-btn');
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = '전송 중...';
+            submitBtn.disabled = true;
+
+            // Formspree로 폼 데이터 비동기 전송
+            fetch(contactForm.action, {
+                method: contactForm.method,
+                body: new FormData(contactForm),
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    const successMsg = document.getElementById('success-msg');
+                    successMsg.style.display = 'block';
+                    
+                    // 폼 초기화
+                    contactForm.reset();
+                    
+                    // 3초 후 성공 메시지 숨김
+                    setTimeout(() => {
+                        successMsg.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert('전송 중 문제가 발생했습니다. Endpoint 주소를 확인해주세요.');
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류가 발생했습니다.');
+                console.error(error);
+            })
+            .finally(() => {
+                // 버튼 상태 원상 복구
+                submitBtn.textContent = originalBtnText;
+                submitBtn.disabled = false;
+            });
+        }
+    });
+}
+
+// ----------------------------------------------------
+// 13. 스크롤 인터랙션 (Navbar, Scroll To Top, Intersection Observer)
+// ----------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const navbar = document.querySelector('.navbar');
+    const scrollTopBtn = document.getElementById('scroll-top-btn');
+
+    // 13-1. 네비게이션 배경색 변경 & 스크롤탑 버튼 표시 로직
+    window.addEventListener('scroll', () => {
+        // 스크롤 60px 이상 시 네비게이션 스타일 변경
+        if (navbar) {
+            if (window.scrollY > 60) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        }
+
+        // 스크롤 300px 이상 시 위로 가기 버튼 표시
+        if (scrollTopBtn) {
+            if (window.scrollY > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        }
+    });
+
+    // 스크롤탑 버튼 클릭 이벤트
+    if (scrollTopBtn) {
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+    // 13-2. 스크롤 애니메이션 (Intersection Observer)
+    const observerOptions = {
+        threshold: 0.2 // 요소가 20% 보일 때 트리거
+    };
+
+    window.scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                // 한 번 보인 요소는 다시 관찰하지 않음 (성능 최적화)
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    const fadeElements = document.querySelectorAll('.fade-in');
+    fadeElements.forEach(el => window.scrollObserver.observe(el));
+});

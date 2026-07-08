@@ -33,7 +33,7 @@
 <body data-theme="light">
     <!-- 스크롤 연동 배경 비디오 및 어두운 오버레이 -->
     <video id="scroll-video" class="bg-video" muted playsinline preload="auto">
-        <source src="image/bg-video01-web.mp4" type="video/mp4">
+        <source src="image/bg-video01-web.webm" type="video/webm">
     </video>
     <div class="video-overlay"></div>
     <!-- 
@@ -93,7 +93,7 @@
 
         <!-- Skills Section -->
         <section id="skills" class="skills-section fade-in">
-            <h2 class="section-title">COMBAT SKILLS</h2>
+            <h2 class="section-title">SKILLS</h2>
             <div class="skills-container">
                 <div class="skill-bar-container">
                     <span class="skill-name">Unity (C#)</span>
@@ -111,19 +111,84 @@
                     <span class="skill-name">Effect</span>
                     <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
                 </div>
+                <div class="skill-bar-container">
+                    <span class="skill-name">2D Art</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
+                </div>
             </div>
         </section>
 
-        <!-- Projects Section -->
+        <!-- 1. Programming Section -->
         <section id="projects" class="projects-section fade-in">
-            <h2 class="section-title">CONFIDENTIAL PROJECTS</h2>
+            <h2 class="section-title">1. PROGRAMMING (GitHub)</h2>
             <div id="filter-tabs" class="filter-tabs">
                 <button class="filter-btn active" data-filter="all">ALL</button>
                 <button class="filter-btn" data-filter="C#">C#</button>
                 <button class="filter-btn" data-filter="C++">C++</button>
             </div>
-            <div id="project-grid" class="project-grid">
-                <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 암호 해독 중 (Loading...)</div>
+            <!-- GitHub API 카드 렌더링 영역 (Carousel) -->
+            <div class="projects-carousel-wrapper">
+                <button id="proj-prev-btn" class="proj-nav-btn" title="이전 프로젝트">&#10094;</button>
+                <div id="project-grid" class="project-grid">
+                    <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 암호 해독 중 (Loading...)</div>
+                </div>
+                <button id="proj-next-btn" class="proj-nav-btn" title="다음 프로젝트">&#10095;</button>
+            </div>
+        </section>
+
+        <!-- 2. Technical Art Section -->
+        <section id="technical-art" class="projects-section fade-in">
+            <h2 class="section-title">2. TECHNICAL ART</h2>
+            
+            <h3 class="sub-section-title">> 2-1. Effect, Shader, Level Design</h3>
+            <!-- WebP 갤러리 카드 렌더링 영역 -->
+            <div id="ta-effect-grid" class="project-grid gallery-grid">
+                <!-- JS에서 채움 -->
+            </div>
+
+            <h3 class="sub-section-title">> 2-2. Rigging</h3>
+            <div class="project-grid" id="ta-rigging-grid">
+                <div class="project-card fade-in">
+                    <div class="project-video">
+                        <video controls muted playsinline class="ta-video-element">
+                            <source src="./image/rigging/3ds_max_rigging_mute.webm" type="video/webm">
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="sub-section-title">> 2-3. 3D Animation</h3>
+            <div class="project-grid" id="ta-animation-grid">
+                <div class="project-card fade-in">
+                    <!-- loop 속성을 제거하여 끝났을 때 JS 이벤트가 발생하도록 함 -->
+                    <video id="ta-anim-video" autoplay muted playsinline class="ta-anim-video">
+                        <source src="./image/3danimation/Gif6.webm" type="video/webm">
+                    </video>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 2D Art & Design Section -->
+        <section id="2d-art" class="projects-section fade-in">
+            <h2 class="section-title">3. 2D ART & DESIGN</h2>
+            <div id="art-grid" class="project-grid">
+                <!-- 통합된 2D Art 단일 카드 -->
+                <div class="project-card fade-in">
+                    <!-- 좌우 화살표 버튼 (2-1과 동일한 히트박스 + 높이 유지) -->
+                    <span id="art-prev-btn" class="inline-prev" title="이전 작품">&#10094;</span>
+                    <span id="art-next-btn" class="inline-next" title="다음 작품">&#10095;</span>
+
+                    <div class="comparison-container" id="art-comparison-container">
+                        <!-- 베이스 이미지: 스케치 (Before) -->
+                        <img id="art-base-img" src="./image/2dart/1-2.webp" alt="Before Sketch" class="comparison-base">
+                        <!-- 오버레이 이미지: 완성본 (After) -->
+                        <img id="art-overlay-img" src="./image/2dart/1-1.webp" alt="After Completed" class="comparison-overlay">
+                        
+                        <!-- 슬라이더 컨트롤 -->
+                        <input type="range" min="0" max="100" value="50" class="comparison-range" id="art-slider-range">
+                        <div class="comparison-handle"><i class="fas fa-arrows-alt-h"></i></div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -132,37 +197,44 @@
     <!-- 눈 깜빡임 비디오 (푸터 상단 배치) -->
     <div class="eyeblink-container">
         <video id="eyeblink-video" class="eyeblink-inline" muted playsinline autoplay preload="auto">
-            <source src="image/eyeblink.mp4" type="video/mp4">
+            <source src="image/eyeblink.webm" type="video/webm">
         </video>
     </div>
 
     <!-- Contact Section -->
     <section id="contact" class="contact-section fade-in">
-        <h2 class="section-title">SECURE TRANSMISSION</h2>
-        <form id="contact-form" class="contact-form" novalidate>
+        <h2 class="section-title">CONTACT</h2>
+        <form id="contact-form" class="contact-form" action="https://formspree.io/f/mlgykngl" method="POST" novalidate>
             <div class="form-group">
-                <label for="name">Alias (이름)</label>
+                <label for="name">이름</label>
                 <input type="text" id="name" name="name" required>
                 <span class="error-msg" id="name-error"></span>
             </div>
             <div class="form-group">
-                <label for="email">Com-link (이메일)</label>
+                <label for="email">이메일</label>
                 <input type="email" id="email" name="email" required>
                 <span class="error-msg" id="email-error"></span>
             </div>
             <div class="form-group">
-                <label for="message">Message (내용)</label>
+                <label for="message">메시지</label>
                 <textarea id="message" name="message" rows="4" required></textarea>
                 <span class="error-msg" id="message-error"></span>
             </div>
-            <button type="submit" class="submit-btn">SEND TRANSMISSION</button>
-            <p id="success-msg" class="success-msg"></p>
+            <button type="submit" class="submit-btn">SEND MESSAGE</button>
+            <p id="success-msg" class="success-msg">메시지가 성공적으로 전송되었습니다!</p>
         </form>
     </section>
 
     <!-- 🌐 실무 표준: 시맨틱 마크업 (footer) -->
-    <footer>
-        <p>&copy; 2026 Agent W. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="footer-socials">
+            <!-- Discord 아이콘 (Font Awesome) 및 클릭 시 복사 스크립트 -->
+            <a href="#" id="discord-link" title="디스코드 아이디 복사" class="discord-link">
+                <i class="fab fa-discord"></i>
+                <span class="discord-username">gonootago</span>
+            </a>
+        </div>
+        <p>&copy; 2026 gonootago. All rights reserved.</p>
     </footer>
 
     <!-- Scroll to Top Button 
@@ -173,5 +245,28 @@
     <button id="scroll-top-btn" class="scroll-top" aria-label="위로 가기">
         <i class="fas fa-space-shuttle"></i>
     </button>
+    <!-- Lightbox Modal (시네마틱 팝업창) -->
+    <div id="lightbox-modal" class="lightbox-modal">
+        <!-- 컨트롤 버튼들 (상단 우측 고정 정렬) -->
+        <div class="lightbox-controls">
+            <span class="lightbox-fullscreen" title="전체화면"><i class="fas fa-expand"></i></span>
+            <span class="lightbox-prev"><i class="fas fa-chevron-left"></i></span>
+            <span class="lightbox-next"><i class="fas fa-chevron-right"></i></span>
+            <span class="lightbox-close" title="닫기 (ESC)"><i class="fas fa-times"></i></span>
+        </div>
+        
+
+        <div class="lightbox-content-wrapper">
+            <!-- 캡션과 분리된 이미지 및 화살표 영역 -->
+            <div class="lightbox-image-container">
+                <span class="lightbox-prev" title="이전 (Left Arrow)">&#10094;</span>
+                <span class="lightbox-next" title="다음 (Right Arrow)">&#10095;</span>
+                <img class="lightbox-content" id="lightbox-img">
+                <div class="lightbox-content" id="lightbox-custom-wrapper"></div>
+            </div>
+            <div id="lightbox-caption"></div>
+        </div>
+    </div>
+
 </body>
 </html>

@@ -6,10 +6,10 @@
     --text-main: #e6edf3;
     --text-muted: #8b949e;
     
-    /* 포인트 광원 (네온 옐로우 & 레이더 그린) */
-    --glow-primary: #FFEA00; 
+    /* 포인트 광원 (네온 옐로우 & 사이언 블루 등) */
+    --glow-primary: #FFEA00; /* 복구: 다크모드 전용 네온 옐로우 */
     --glow-primary-dim: rgba(255, 234, 0, 0.2);
-    --glow-secondary: #39FF14;
+    --glow-secondary: #00f0ff; /* 서브 색상은 시안 블루 */
     --accent-danger: #ff3333; /* CTA 버튼, 에러 메시지 등 */
 
     /* 🌙 다크모드용 특수 효과 (글래스모피즘 & 비디오 오버레이) */
@@ -53,6 +53,10 @@ body[data-theme="light"] {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
@@ -378,13 +382,42 @@ section {
 .project-grid {
     display: grid;
     /* 
-     * CSS Grid 최고의 마법 (미디어 쿼리 없이 반응형 만들기):
-     * - minmax(300px, 1fr): 각 카드의 너비는 최소 300px을 보장하되, 화면이 넓어지면 남는 공간(1fr)을 공평하게 나눠 가져라.
-     * - auto-fit: 화면이 좁아지거나 넓어짐에 따라, 300px 카드가 들어갈 수 있는 만큼 알아서 열(Column)의 개수를 조절해라.
-     * 이 한 줄의 코드 덕분에 카드가 화면 크기에 맞춰 3열 -> 2열 -> 1열로 자동 변환된다.
+     * 기본은 1열 중앙 정렬 (1개짜리 아이템용)
      */
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--space-lg);
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* GitHub(PROGRAMMING) 영역만 2열 캐러셀 구조로 유지 */
+#project-grid {
+    grid-template-columns: 1fr 1fr;
+    max-width: 100%;
+}
+
+.proj-nav-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.proj-nav-btn:hover {
+    color: var(--primary-yellow);
+    transform: scale(1.1);
+}
+.proj-nav-btn:disabled {
+    opacity: 0.1;
+    cursor: default;
+    pointer-events: none;
 }
 
 .loading-spinner {
@@ -392,7 +425,95 @@ section {
     text-align: center;
     padding: var(--space-xl) 0;
     color: var(--text-muted);
-}/* --- 6. Contact Section --- */
+}
+
+.project-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    border-color: var(--glow-primary);
+}
+
+/* 갤러리 카드(메인 화면 인라인 뷰어)는 호버 시 위로 점프하지 않음 */
+.project-card.gallery-card:hover {
+    transform: none;
+}
+
+.project-video {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 비율 (9/16 = 0.5625) */
+    height: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: var(--space-md);
+    background-color: #000;
+}
+
+.project-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.project-info h3 {
+    margin-bottom: var(--space-sm);
+    color: var(--glow-primary);
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.project-info p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-md);
+    line-height: 1.4;
+    text-align: center;
+    /* 설명이 너무 길면 3줄까지만 보이고 자르기 */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: var(--space-lg);
+    justify-content: center;
+}
+
+.project-tags .tag {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.project-links {
+    margin-top: auto; /* 남은 공간을 밀어내어 버튼을 항상 맨 아래로 정렬 */
+    text-align: center;
+}
+
+/* --- 6. Contact Section --- */
 .contact-section {
     max-width: 600px;
     margin: 0 auto;
@@ -520,10 +641,26 @@ footer {
     border: none;
     font-size: 1.2rem;
     cursor: pointer;
-    display: none; /* 향후 JS로 스크롤 시 등장하게 처리 */
+    /* 💡 페이드 효과를 위해 display 대신 투명도 및 위치 제어 활용 */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 99;
+}
+
+/* 💡 유저 요청: 우주선이 위쪽을 향하도록 회전 */
+.scroll-top i {
+    transform: rotate(-90deg);
+}
+
+.scroll-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 /* ====================================================
@@ -536,12 +673,107 @@ footer {
         1024px 이상은 PC(3열 이상)로 취급하는 것이 가장 대중적이고 안전한 분기점이다.
 ==================================================== */
 @media (max-width: 768px) {
+    /* 
+      💡 CSS Stacking Context 충돌 해결
+      부모(#main-header)에 backdrop-filter가 있으면 자식(.nav-links)의 블러가 부모 밖의 요소를 흐리게 하지 못하는 CSS 한계가 있습니다.
+      따라서 모바일에서는 부모 헤더의 블러를 끄고, 대신 배경을 솔리드하게 만들어 자식의 블러가 폭발적으로 먹히도록 합니다.
+    */
+    #main-header {
+        background: var(--bg-main);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    /* 💡 다크모드 버튼(달 모양)을 우측 햄버거 메뉴 옆으로 찰싹 붙이되 약간 띄우기 */
+    #main-nav {
+        margin-left: auto;
+        margin-right: 2.5rem; /* 버튼끼리 너무 가깝지 않도록 간격 넓힘 */
+    }
+
     /* 모바일에서는 네비게이션 링크 숨기고 햄버거 메뉴 노출 */
     .nav-links {
-        display: none;
+        position: absolute;
+        top: 100%; /* 헤더의 바로 아래쪽에 달라붙도록 */
+        left: 0;
+        width: 100%;
+        padding: 2rem 0;
+        height: auto;
+        
+        /* 세련된 글래스모피즘(반투명 유리) 배경 적용 및 블러 강화 */
+        background-color: var(--glass-bg);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border-bottom: 1px solid var(--glass-border);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        
+        /* 위쪽으로 살짝 숨겨두고 투명하게 처리 (슬라이드 다운 준비) */
+        transform: translateY(-20px);
+        opacity: 0;
+        pointer-events: none; /* 투명할 때 클릭 방지 */
+        
+        transition: all 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+        z-index: -1; /* 헤더 뒷공간으로 숨기기 */
     }
+    
+    /* JS에서 .active 클래스를 붙였을 때 튀어나오는 최종 위치 (컨테이너 전체) */
+    .nav-links.active {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* 💡 유저 요청: 메뉴 아이템(li) 개별 애니메이션 준비 (숨겨두기) */
+    .nav-links li {
+        opacity: 0;
+        transform: translateY(-15px);
+        transition: all 0.4s ease;
+    }
+
+    /* 메뉴가 열리면 아이템들이 순차적으로 등장 */
+    .nav-links.active li {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* 위에서부터 아래로 0.1초씩 딜레이(시간차)를 주어 '촤라락' 효과 완성 */
+    .nav-links.active li:nth-child(1) { transition-delay: 0.1s; }
+    .nav-links.active li:nth-child(2) { transition-delay: 0.2s; }
+    .nav-links.active li:nth-child(3) { transition-delay: 0.3s; }
+    .nav-links.active li:nth-child(4) { transition-delay: 0.4s; }
+    .nav-links.active li:nth-child(5) { transition-delay: 0.5s; }
+
+    /* 💡 유저 요청: 모바일 메뉴 항목 터치(호버) 시 명확한 시각적 피드백 제공 */
+    .filter-btn {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+    }
+    .project-grid {
+        grid-template-columns: 1fr;
+    }
+    .proj-nav-btn {
+        font-size: 1.5rem;
+    }
+    .nav-links a {
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-links a:hover {
+        background-color: var(--glow-primary-dim);
+        color: var(--glow-primary);
+        box-shadow: 0 0 15px var(--glow-primary-dim);
+        transform: scale(1.05);
+    }
+
     .hamburger {
         display: block;
+        z-index: 101;
     }
     
     /* 폰트 사이즈 조정 */
@@ -574,8 +806,14 @@ footer {
     width: 100%;
     display: flex;
     justify-content: center;
-    background-color: var(--bg-color); /* 사이트 배경색과 일치 */
+    background-color: transparent; /* 💡 다크모드에서 뒤쪽 그라데이션 오버레이와 자연스럽게 섞이도록 투명하게 원복 */
     padding: 2rem 0;
+    transition: background-color 0.5s ease;
+}
+
+/* 💡 라이트모드 전용: 이스터에그 미세 대비 조절용 (유저 세팅 유지) */
+body[data-theme="light"] .eyeblink-container {
+    background-color: #F8F9FA; 
 }
 
 .eyeblink-inline {
@@ -585,9 +823,14 @@ footer {
     object-fit: cover;
     mix-blend-mode: screen;
     
-    /* 비디오의 네모난 경계선을 부드럽게 지워주는 페더링(마스크) 효과 */
-    -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 80%);
-    mask-image: radial-gradient(ellipse at center, black 60%, transparent 80%);
+    /* 
+       [비디오 네모난 경계선 페더링(마스크) 황금 비율]
+       1) ellipse 50% 50% : 가림막 크기를 비디오 박스 사이즈에 정확히 1:1로 맞춤 (가장자리 넘침 방지)
+       2) black 88%       : 중앙에서 88% 지점까지는 원본 비디오(눈알)를 100% 쨍하게 보여줌
+       3) transparent 100%: 나머지 12%의 짧은 구간 동안 급격하게 흐려져서, 끝선(100%)에 닿을 땐 완벽하게 투명해짐
+    */
+    -webkit-mask-image: radial-gradient(ellipse 50% 50% at center, black 88%, transparent 100%);
+    mask-image: radial-gradient(ellipse 50% 50% at center, black 88%, transparent 100%);
 }
 
 /* 두 번째 비디오를 첫 번째 비디오 위에 곱하기(Multiply) 모드로 합성 */
@@ -608,4 +851,501 @@ footer {
     transition: background 0.5s ease;
 }
 
+/* --- 8. Portfolio Category & Gallery Styles --- */
+.sub-section-title {
+    font-size: 1.5rem;
+    color: var(--glow-primary);
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    text-shadow: 0 0 5px var(--glow-primary-dim);
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.5rem;
+    text-align: center;
+}
+
+/* 갤러리 전용 이미지 카드 스타일 */
+.gallery-card {
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    padding: 0; /* 기존 카드 패딩 제거 */
+}
+
+.gallery-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block; /* 이미지 아래 여백 제거 */
+}
+
+.gallery-card:hover img {
+    /* 감상에 방해되지 않도록 스케일 확대 제거 */
+    transform: none;
+}
+
+.placeholder-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    gap: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.placeholder-card i {
+    font-size: 2rem;
+}
+
+/* --- Lightbox Modal (시네마틱 팝업) --- */
+.lightbox-modal {
+    display: none; /* JS로 제어 */
+    position: fixed;
+    z-index: 9999;
+    padding-top: 50px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.lightbox-content-wrapper {
+    position: relative;
+    margin: auto;
+    width: 95vw;
+    max-width: 1800px;
+    height: 90vh; /* 캡션 포함 전체 래퍼의 고정 높이 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-image-container {
+    position: relative;
+    width: 100%;
+    flex-grow: 1; /* 남은 공간을 모두 차지하도록 하여 항상 동일한 높이 유지 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* 영역 밖으로 나가는 이미지 제어 */
+}
+
+.lightbox-content {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 원본 해상도와 무관하게 컨테이너에 맞춰 스케일업/다운 */
+    border-radius: 8px;
+    box-shadow: none; /* 컨테이너 박스 그림자 제거 */
+    filter: drop-shadow(0 0 20px var(--glow-primary-dim)); /* 실제 렌더링된 이미지 픽셀에만 노란색 후광 적용 */
+    animation: zoomIn 0.3s ease;
+}
+
+#lightbox-caption {
+    margin-top: 1rem;
+    color: var(--glow-primary);
+    font-size: 1.2rem;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+/* 컨트롤 아이콘 컨테이너 (정렬용) */
+.lightbox-controls {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 10000;
+}
+
+.lightbox-close {
+    color: #f1f1f1;
+    font-size: 28px; /* 크기 통일 */
+    font-weight: normal; /* FontAwesome 아이콘에 맞춤 */
+    cursor: pointer;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.lightbox-close:hover,
+.lightbox-close:focus {
+    color: var(--glow-primary);
+    text-decoration: none;
+}
+
+/* 라이트박스 전체화면 버튼 */
+.lightbox-fullscreen {
+    color: #f1f1f1;
+    font-size: 28px; /* 크기 통일 */
+    cursor: pointer;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.lightbox-fullscreen:hover {
+    color: var(--glow-primary);
+}
+
+/* 좌우 화살표 (슬라이드 내비게이션 - 대형 히트박스 적용) */
+.lightbox-prev,
+.lightbox-next {
+    cursor: pointer;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 15%; /* 화면 가장자리 15%를 히트박스로 사용 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 60px; /* 화살표 아이콘 크기도 대폭 확대 */
+    transition: all 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 10000;
+}
+
+/* 왼쪽 화살표 위치 */
+.lightbox-prev {
+    left: 0;
+    justify-content: flex-start;
+    padding-left: 2rem;
+}
+
+/* 오른쪽 화살표 위치 */
+.lightbox-next {
+    right: 0;
+    justify-content: flex-end;
+    padding-right: 2rem;
+}
+
+/* 화살표 호버 시 */
+.lightbox-prev:hover,
+.lightbox-next:hover {
+    color: white;
+    /* 은은하게 배경 그라데이션이 생기며 클릭 영역임을 명확히 인지시킴 */
+    background: linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 100%);
+}
+.lightbox-next:hover {
+    background: linear-gradient(to left, rgba(0,0,0,0.4) 0%, transparent 100%);
+}
+
+/* --- Effect 전용 1열 꽉 찬 그리드 --- */
+#ta-effect-grid {
+    grid-template-columns: 1fr;
+    max-width: 1000px; /* 너무 커지지 않게 제한 */
+    margin: 0 auto;
+}
+
+/* 인라인(카드 내부) 슬라이더 화살표 */
+.inline-prev,
+.inline-next {
+    cursor: pointer;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 12%; /* 충분한 클릭 히트박스 영역 확보 */
+    display: flex;
+    align-items: center; /* 다시 원래대로 중앙 정렬 복구 */
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 35px;
+    transition: all 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 20; /* 슬라이더 바보다 우선 클릭되도록 z-index 확보 */
+}
+
+.inline-prev {
+    left: 0;
+    justify-content: flex-start;
+    padding-left: 1rem;
+    border-radius: 8px 0 0 0;
+}
+
+.inline-next {
+    right: 0;
+    justify-content: flex-end;
+    padding-right: 1rem;
+    border-radius: 0 8px 0 0;
+}
+
+.inline-prev:hover,
+.inline-next:hover {
+    color: white;
+}
+.inline-prev:hover {
+    background: linear-gradient(to right, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+.inline-next:hover {
+    background: linear-gradient(to left, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+/* 인라인(카드 내부) 상태 텍스트 (우측 하단) */
+.inline-badge {
+    text-align: right;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding: 10px 10px 0 0;
+    pointer-events: none;
+    width: 100%;
+}
+
+@keyframes zoomIn {
+    from {transform: scale(0.9); opacity: 0;}
+    to {transform: scale(1); opacity: 1;}
+}
+
+
+
+/* ==========================================================================
+   6. Image Comparison Slider (2D Art & Design)
+   ========================================================================== */
+.comparison-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+    background: #000;
+}
+
+/* Base 이미지가 기준이 되어 컨테이너의 세로 길이를 유동적으로 늘림 */
+.comparison-base {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* Overlay 이미지는 Base 이미지 위에 완벽히 포개짐 */
+.comparison-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none; /* Let clicks pass through to range input */
+}
+
+/* 오버레이(완성본)는 clip-path로 가려짐. 변수 --slider-pos에 따라 변화 */
+.comparison-overlay {
+    clip-path: polygon(0 0, var(--slider-pos), 0, var(--slider-pos), 100%, 0 100%);
+    /* polygon(left top, right top, right bottom, left bottom) -> polygon(0 0, x 0, x 100%, 0 100%) */
+    clip-path: polygon(0 0, var(--slider-pos) 0, var(--slider-pos) 100%, 0 100%);
+}
+
+.comparison-range {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    outline: none;
+    margin: 0;
+    -webkit-appearance: none; /* Hide default slider */
+    appearance: none;
+    z-index: 20;
+    cursor: ew-resize;
+}
+
+/* 슬라이더 트랙 안보이게 */
+.comparison-range::-webkit-slider-runnable-track,
+.comparison-range::-moz-range-track {
+    background: transparent;
+    height: 100%;
+}
+
+/* 실제 안보이는 드래그 핸들 (터치 영역 확보) */
+.comparison-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 40px;
+    height: 100vh; /* 화면 꽉차게 잡히도록 */
+    background: transparent;
+}
+.comparison-range::-moz-range-thumb {
+    width: 40px;
+    height: 100vh;
+    background: transparent;
+    border: none;
+}
+
+/* 커스텀 UI 핸들 (네온 선과 화살표 버튼) */
+.comparison-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--slider-pos);
+    width: 2px;
+    background: var(--glow-primary);
+    box-shadow: 0 0 10px var(--glow-primary);
+    transform: translateX(-50%);
+    pointer-events: none; /* 시각적 요소이므로 클릭 무시 */
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comparison-handle::after {
+    content: '\f337'; /* FontAwesome arrows-alt-h 였으나, 직접 icon 넣었으니 생략가능 */
+    display: none;
+}
+
+.comparison-handle i {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #222;
+    color: var(--glow-primary);
+    border: 2px solid var(--glow-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 0 15px var(--glow-primary-dim);
+    /* 부드러운 애니메이션 효과 제거 (드래그 시 딜레이 방지) */
+}
+
+/* 라벨 (스케치 vs 완성본) */
+.comparison-label {
+    position: absolute;
+    top: 15px;
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 5;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.label-after {
+    left: 15px;
+}
+
+.label-before {
+    right: 15px;
+}
+
+/* ==========================================================================
+   7. Scroll Animations & Interactions (요구사항 추가)
+   ========================================================================== */
+.fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.navbar.scrolled {
+    background-color: var(--bg-main);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    /* 다크모드 시 자연스럽게 어울리도록 알파값 조절된 bg-main 적용 */
+}
+
+/* ==========================================================================
+   8. Removed Inline Styles (과제 제약조건 충족용)
+   ========================================================================== */
+.projects-carousel-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+#project-grid {
+    flex: 1;
+}
+
+.ta-video-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: black;
+}
+
+#ta-anim-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 500px;
+    object-fit: contain;
+    background: #0a0a0a;
+    border-radius: 8px 8px 0 0;
+    display: block;
+}
+
+.project-card {
+    position: relative;
+}
+
+.error-msg {
+    color: #ff4d4d;
+    display: none;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.success-msg {
+    display: none;
+    color: #4ade80;
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.site-footer {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-main);
+    color: #888;
+}
+
+.footer-socials {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.discord-link {
+    color: #5865F2;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.discord-username {
+    font-size: 1rem;
+    color: #ccc;
+}
+
+#lightbox-custom-wrapper {
+    display: none;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
 
