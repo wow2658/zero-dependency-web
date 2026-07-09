@@ -65,13 +65,13 @@ const savedTheme = localStorage.getItem('portfolio_theme');
 // - 만약 "savedTheme === 'light' ? false : true" 로 짰다면: null은 'light'가 아니므로 무조건 뒤의 true(다크모드)가 기본값이 됩니다.
 // - 하지만 "savedTheme === 'dark' ? true : false" 로 짜면: null은 'dark'가 아니므로 무조건 뒤의 false(라이트모드)가 기본값이 됩니다.
 // - 💡 즉, "명시적으로 다크모드('dark')를 선택한 유저가 아니면, 첫 방문자(null)를 포함한 나머지는 싹 다 라이트모드로 밀어버리겠다"는 실무 테크닉입니다.
-let initialDarkMode = false;
+let initialDarkMode = true;
 if (savedTheme) {
     // 1. 유저가 이전에 선택한 테마가 있다면 그걸 최우선으로 따름
     initialDarkMode = savedTheme === 'dark';
 } else {
-    // 2. 저장된 테마가 없다면 (첫 방문), 사용자 기기의 시스템 설정(다크모드 여부)을 감지
-    initialDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // 2. 저장된 테마가 없다면 (첫 방문), 다크모드를 기본값으로 설정
+    initialDarkMode = true;
 }
 
 const STATE = {
@@ -404,7 +404,7 @@ if (scrollTopBtn) {
 const GITHUB_USERNAME = 'wow2658';
 const projectGrid = document.querySelector('#project-grid');
 
-const STATE = { repos: [], filter: 'all', page: 0 };
+Object.assign(STATE, { repos: [], filter: 'all', page: 0 });
 
 
 const cardsPerPage = 2; // 데스크톱에서는 2개씩
