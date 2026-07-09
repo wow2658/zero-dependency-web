@@ -58,7 +58,13 @@ console.log("포트폴리오 스크립트 로드 완료...");
 // - 유저가 폰에서 라이트모드로 기껏 바꿔놨는데, 페이지를 새로고침하는 순간 
 //   메모리(RAM)에 있던 STATE 객체가 통째로 증발하면서 무조건 다크모드(초기값)로 강제 초기화됩니다.
 // - 이를 막기 위해 시작하자마자 캐비닛(하드디스크)부터 뒤져서 예전 기록(savedTheme)을 꺼내오는 로직입니다.
-const savedTheme = localStorage.getItem('portfolio_theme');
+// 💡 추가 보완: 브라우저 시크릿 모드 등으로 인해 localStorage 읽기 권한 실패 시 에러가 발생할 수 있으므로, 간단한 에러 핸들링을 적용합니다.
+let savedTheme = null;
+try {
+    savedTheme = localStorage.getItem('portfolio_theme');
+} catch (e) {
+    console.warn("LocalStorage 접근 실패 (권한 문제). 기본 테마로 설정합니다.");
+}
 
 // [초기 상태 결정 로직 (삼항 연산자 Fallback)]
 // - 사이트에 태어나서 처음 온 유저는 localStorage에 기록이 없으므로 savedTheme에 'null'이 들어갑니다.
@@ -156,6 +162,7 @@ renderTheme();
 //    이것이 바로 자바스크립트의 '화살표 함수(Arrow Function)'입니다!
 //    C#이나 C++ 개발자이신 유저님에게 아주 익숙한 '람다(Lambda) 식'과 정확히 똑같은 개념입니다.
 //    기존의 `function() {}` 보다 문법이 간결하고 this 바인딩 문제를 해결해주어 현대 JS 실무 표준으로 쓰입니다.
+// 💡 추가 제안: 현재 익명 화살표 함수로 작성된 이벤트 핸들러들은 추후 재사용성 및 가독성을 높이기 위해 네이밍 함수(Named Function)로 분리할 것을 권장합니다.
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
         STATE.isDarkMode = !STATE.isDarkMode; // 1. 상태 갱신 (참 <-> 거짓 뒤집기)
@@ -178,6 +185,7 @@ if (videos.length > 0) {
         });
     });
 
+    // 💡 설계 제안: 스크롤(scroll)이나 리사이즈(resize) 이벤트는 매우 빈번히 발생하므로, 디바운스(Debounce)나 스로틀(Throttle)을 적용하여 핸들러를 경량화하는 것을 권장합니다.
     window.addEventListener('scroll', () => {
         // [스크롤 퍼센트 구하는 공식의 핵심 원리 (단면도 비유)]
         // 브라우저의 좌표계는 무조건 '맨 꼭대기(위)가 0px' 입니다. (스크롤을 내릴수록 숫자가 커짐)
@@ -360,6 +368,7 @@ if (mobileMenuBtn && navLinks) {
     mobileMenuBtn.addEventListener('click', (e) => {
         e.stopPropagation(); // 버튼 클릭이 document로 전파되는 것 방지
         navLinks.classList.toggle('active');
+        // 💡 접근성 권장 사항: 메뉴 토글 시 aria-expanded 상태 속성 업데이트를 추가하면 스크린리더 사용에 유용합니다.
     });
 
     // 💡 유저 요청: 외부(다른 곳) 클릭 시 메뉴 알아서 사라지게 하기
@@ -404,8 +413,13 @@ if (scrollTopBtn) {
 const GITHUB_USERNAME = 'wow2658';
 const projectGrid = document.querySelector('#project-grid');
 
-Object.assign(STATE, { repos: [], filter: 'all', page: 0 });
-
+// 💡 상태 변경 규칙: 상태 객체(STATE) 갱신 시에는 직접 할당보다는 Object.assign() 등을 사용해 관리하고, 
+// 복잡한 상태 전환 시 변경 로그(예: console.log('상태 변경:', STATE))를 추가하면 디버깅이 더욱 용이합니다.
+const STATE = {
+    repos: [],    // 원본 데이터
+    filter: 'all', // 현재 선택된 필터
+    page: 0       // 현재 페이지 번호
+};
 
 const cardsPerPage = 2; // 데스크톱에서는 2개씩
 
@@ -497,6 +511,7 @@ async function fetchGithubRepos() {
         };
 
         // 데이터를 정제하여 전역 배열에 저장
+        // 💡 원본 배열 불변성 보장: 원본 데이터(repos)를 훼손하지 않기 위해 .map()을 사용하여 순수 복사본 기반의 데이터 가공 파이프라인을 구축했습니다.
         STATE.repos = repos.map(repo => {
             let language = repo.language || 'Classified';
             if (repo.name === 'Unity_OverCooked') language = 'C#';
@@ -1065,7 +1080,19 @@ if (contactForm) {
         // 1. [이벤트 차단] 기본 제출 동작 방지 (페이지 새로고침 방지)
         event.preventDefault();
         
+        // 🛡️ 스팸 방어 3: 쿨타임(Throttling) 체크 (3분 = 180000ms)
+        const lastSentTime = localStorage.getItem('last_email_sent');
+        if (lastSentTime) {
+            const timePassed = Date.now() - parseInt(lastSentTime, 10);
+            if (timePassed < 180000) {
+                const remainingMinutes = Math.ceil((180000 - timePassed) / 60000);
+                alert(`메시지 전송이 너무 빈번합니다. ${remainingMinutes}분 후 다시 시도해주세요.`);
+                return; // 전송 중단
+            }
+        }
+        
         // 👉 2. [상태 선언] isValid 라는 데이터 상태를 먼저 만듭니다.
+        let isValid = true; // 💡 폼 유효성 플래그 명시적 초기화
         
         // 2. 이름 검증 (빈 필드 불가)
         const nameInput = document.getElementById('name');
@@ -1123,6 +1150,9 @@ if (contactForm) {
             })
             .then(response => {
                 if (response.ok) {
+                    // 🛡️ 성공 시 현재 시간을 로컬스토리지에 저장하여 쿨타임 시작
+                    localStorage.setItem('last_email_sent', Date.now().toString());
+
                     const successMsg = document.getElementById('success-msg');
                     successMsg.style.display = 'block';
                     
@@ -1359,3 +1389,28 @@ if (particleCanvas) {
         }
     });
 }
+
+// ----------------------------------------------------
+// 14. 개발자 도구(F12) 및 우클릭(Context Menu) 방지
+// ----------------------------------------------------
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); // 마우스 우클릭 메뉴 띄우기 차단
+});
+
+document.addEventListener('keydown', (e) => {
+    // F12 차단
+    if (e.key === 'F12' || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+    }
+    // Ctrl+Shift+I (개발자 도구) / Ctrl+Shift+J (콘솔창) 차단 (맥OS Command+Option+I 대응 포함)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) {
+        e.preventDefault();
+        return false;
+    }
+    // Ctrl+U (페이지 소스 보기) 차단
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) {
+        e.preventDefault();
+        return false;
+    }
+});
