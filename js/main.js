@@ -415,11 +415,11 @@ const projectGrid = document.querySelector('#project-grid');
 
 // 💡 상태 변경 규칙: 상태 객체(STATE) 갱신 시에는 직접 할당보다는 Object.assign() 등을 사용해 관리하고, 
 // 복잡한 상태 전환 시 변경 로그(예: console.log('상태 변경:', STATE))를 추가하면 디버깅이 더욱 용이합니다.
-const STATE = {
+Object.assign(STATE, {
     repos: [],    // 원본 데이터
     filter: 'all', // 현재 선택된 필터
     page: 0       // 현재 페이지 번호
-};
+});
 
 const cardsPerPage = 2; // 데스크톱에서는 2개씩
 
