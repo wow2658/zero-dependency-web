@@ -1103,7 +1103,8 @@ body[data-theme="light"] .eyeblink-container {
     width: 12%; /* 충분한 클릭 히트박스 영역 확보 */
     display: flex;
     align-items: center; /* 다시 원래대로 중앙 정렬 복구 */
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     font-size: 35px;
     transition: all 0.3s ease;
     user-select: none;
@@ -1116,6 +1117,7 @@ body[data-theme="light"] .eyeblink-container {
     justify-content: flex-start;
     padding-left: 1rem;
     border-radius: 8px 0 0 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.3) 0%, transparent 100%);
 }
 
 .inline-next {
@@ -1123,6 +1125,7 @@ body[data-theme="light"] .eyeblink-container {
     justify-content: flex-end;
     padding-right: 1rem;
     border-radius: 0 8px 0 0;
+    background: linear-gradient(to left, rgba(0,0,0,0.3) 0%, transparent 100%);
 }
 
 .inline-prev:hover,
