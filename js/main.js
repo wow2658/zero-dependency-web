@@ -1,37 +1,4 @@
-/**
- * 🌐 프론트엔드 포트폴리오 메인 스크립트
- * 
- * - 4단계: DOM 제어 및 이벤트 리스너 연결
- * - 5단계: STATE 객체 설계 및 다크모드 로직
- * - 6단계: 비동기 통신 (GitHub API) 
- * - 7단계: 폼 유효성 검사 및 필터링
- * 
- * 위 기능들이 앞으로 이 파일에 단계적으로 채워질 예정이다.
- */
-
-console.log("포트폴리오 스크립트 로드 완료...");
-
-// ----------------------------------------------------
-// 0. 전역 상태(STATE) 관리 객체
-// ----------------------------------------------------
-// 💡 JS 객체 리터럴(Object Literal)과 const의 진짜 의미 (CS 면접 단골 질문!)
-// 
-// 1. 객체 리터럴 (Object Literal): 
-//    - 코드에 중괄호 { } 를 쓰는 순간, 메모리에 '완전히 새로운 빈 상자'가 하나 즉시 생성됩니다. 
-//    - 무거운 클래스(Class) 선언 없이 곧바로 딕셔너리를 찍어내는 JS만의 강력한 문법입니다.
-// 
-// 2. 재할당 금지(No Reassignment) vs 가변/불변성(Mutable/Immutable):
-//    - const는 데이터가 "불변(Immutable)"하다는 뜻이 아닙니다! 변수의 "재할당 금지"를 의미합니다.
-//    - ❌ STATE = { isDarkMode: false }; 
-//      -> 우측에 중괄호 { } 를 썼으므로 메모리에 '새로운 상자(주소값)'가 만들어집니다. 
-//      -> = 기호는 STATE가 들고 있던 기존 상자의 주소를 방금 만든 새 상자의 주소로 '교체(재할당)' 하려 합니다.
-//      -> const가 "주소값(목줄) 교체 사형!" 이라며 에러를 뱉습니다.
-//    - ✅ STATE.isDarkMode = false;
-//      -> 중괄호가 없으므로 새 상자를 만들지 않습니다.
-//      -> 원래 주소로 찾아가서 뚜껑이 열려있는(Mutable) 기존 상자 안의 내용물만 쓱 바꿉니다. 완벽히 허용됩니다!
-// 💡 과제 루브릭 필수: 로컬 스토리지(localStorage)를 활용하여 테마 설정 영구 유지!
-// 
-// [localStorage 란?]
+// [localStorage]
 // - 📍 브라우저 및 운영체제(OS)별 실제 물리적 저장 위치 (DB 파일 경로)
 //   [Windows]
 //   - Chrome: C:\Users\<사용자명>\AppData\Local\Google\Chrome\User Data\Default\Local Storage\leveldb
@@ -49,16 +16,17 @@ console.log("포트폴리오 스크립트 로드 완료...");
 //   [Mobile (보안 샌드박스로 인해 루팅/탈옥 없이 일반 접근 불가)]
 //   - Android Chrome: /data/data/com.android.chrome/app_chrome/Default/Local Storage/leveldb
 //   - iOS Safari: /var/mobile/Containers/Data/Application/<앱UUID>/Library/WebKit/WebsiteData/LocalStorage
-// - 페이지를 새로고침(F5)하거나 브라우저를 껐다 켜도 절대 데이터가 지워지지 않습니다.
-// - ⚠️ 브라우저/도메인 종속적: 크롬 캐비닛과 사파리(아이폰) 캐비닛은 완벽히 분리되어 있습니다.
+// 
+// - ⚠️ 브라우저/도메인 종속적: 크롬 캐비닛과 사파리(아이폰) 캐비닛은 완벽히 분리되어 있다.
 //   (즉, 유저가 크롬에서 다크모드를 켰다고 해서, 엣지나 사파리 브라우저까지 다크모드가 되지는 않음)
 // - 사용법: 꺼낼 때는 getItem('키'), 넣을 때는 setItem('키', '값')
 //
-// [이 코드가 없으면 벌어지는 일 (실무 대참사 & 과제 감점 사유)]
-// - 유저가 폰에서 라이트모드로 기껏 바꿔놨는데, 페이지를 새로고침하는 순간 
-//   메모리(RAM)에 있던 STATE 객체가 통째로 증발하면서 무조건 다크모드(초기값)로 강제 초기화됩니다.
-// - 이를 막기 위해 시작하자마자 캐비닛(하드디스크)부터 뒤져서 예전 기록(savedTheme)을 꺼내오는 로직입니다.
-// 💡 추가 보완: 브라우저 시크릿 모드 등으로 인해 localStorage 읽기 권한 실패 시 에러가 발생할 수 있으므로, 간단한 에러 핸들링을 적용합니다.
+// 
+//  변수 선언 없이 맨 윗줄부터 getItem을 쓸 수 있는 이유?
+// - 'portfolio_theme'은 JS 메모리(RAM)에 올라가는 변수(let, const)가 아니라, 외부 하드디스크(브라우저 서랍장)에 저장되는 '파일 이름(키)'이다.
+// - 첫 방문이라 서랍장에 이 파일이 없어도 에러(ReferenceError)가 나지 않고 쿨하게 null을 반환하기 때문에 최상단에서 안전하게 꺼내볼 수 있다.
+// 
+// 브라우저 시크릿 모드 등으로 인해 localStorage 읽기 권한 실패 시 에러가 발생할 수 있으므로, 간단한 에러 핸들링을 적용.
 let savedTheme = null;
 try {
     savedTheme = localStorage.getItem('portfolio_theme');
@@ -70,7 +38,7 @@ try {
 // - 사이트에 태어나서 처음 온 유저는 localStorage에 기록이 없으므로 savedTheme에 'null'이 들어갑니다.
 // - 만약 "savedTheme === 'light' ? false : true" 로 짰다면: null은 'light'가 아니므로 무조건 뒤의 true(다크모드)가 기본값이 됩니다.
 // - 하지만 "savedTheme === 'dark' ? true : false" 로 짜면: null은 'dark'가 아니므로 무조건 뒤의 false(라이트모드)가 기본값이 됩니다.
-// - 💡 즉, "명시적으로 다크모드('dark')를 선택한 유저가 아니면, 첫 방문자(null)를 포함한 나머지는 싹 다 라이트모드로 밀어버리겠다"는 실무 테크닉입니다.
+// - 💡 즉, "명시적으로 다크모드('dark')를 선택한 유저가 아니면, 첫 방문자(null)를 포함한 나머지는 싹 다 라이트모드로 밀어버리겠다"는 실무 테크닉이다.
 let initialDarkMode = true;
 if (savedTheme) {
     // 1. 유저가 이전에 선택한 테마가 있다면 그걸 최우선으로 따름
@@ -80,18 +48,38 @@ if (savedTheme) {
     initialDarkMode = true;
 }
 
+// ----------------------------------------------------
+// 0. 전역 상태(STATE) 관리 객체
+// ----------------------------------------------------
+// 1. 객체 리터럴 (Object Literal): 
+//    - 코드에 중괄호 { } 를 작성하면, 힙(Heap) 메모리 영역에 새로운 객체가 즉시 할당(생성)된다.
+//    - 별도의 클래스(Class) 선언 없이 곧바로 객체를 생성할 수 있는 JS 고유의 문법이다.
+// 
+// 2. 재할당 금지(No Reassignment) vs 가변성(Mutability):
+//    - const 키워드는 데이터 자체의 불변성(Immutable)을 보장하는 것이 아니라, 변수의 '메모리 주소 재할당'을 금지한다.
+//    - ❌ STATE = { isDarkMode: false }; 
+//      -> 우측의 { } 문법이 메모리에 완전히 새로운 객체(새로운 참조 주소)를 생성한다.
+//      -> = 대입 연산자를 통해 기존 STATE 변수에 새로운 참조 주소를 덮어씌우려(재할당) 시도하므로 TypeError가 발생한다.
+//    - ✅ STATE.isDarkMode = false;
+//      -> 새로운 객체를 생성하지 않으므로, 기존 참조 주소(Reference)가 그대로 유지된다.
+//      -> 객체 내부는 기본적으로 가변적(Mutable)이므로, 참조 주소 변경 없이 내부 프로퍼티 값만 수정하는 것은 문법적으로 완벽히 허용된다.
+// 전체 애플리케이션의 단일 진실 공급원(Single Source of Truth)
+// - 앱에서 사용되는 모든 동적 상태는 반드시 이곳에 미리 선언(초기화)하여,
+// - 누구나 이 객체만 보고도 앱의 전체 상태 구조(Shape)를 파악할 수 있도록 강제한다.
 const STATE = {
-    isDarkMode: initialDarkMode
+    isDarkMode: initialDarkMode,
+    repos: [],      // GitHub API 통신 결과 원본 데이터 배열
+    filter: 'all',  // 현재 선택된 프로젝트 언어 필터 ('all', 'C#', 'Unreal' 등)
+    page: 0         // 현재 보고 있는 프로젝트 캐러셀 페이지 번호 (0부터 시작)
 };
 
 // ----------------------------------------------------
 // 0-1. 다크모드 테마 렌더링 로직 (State-Driven UI)
 // ----------------------------------------------------
-// 💡 과제 루브릭 필수: DOM 탐색 시 getElementById 대신 querySelector 사용!
+// DOM 탐색 시 getElementById 대신 querySelector 사용!
 // - getElementById: 오직 '아이디'만 찾을 수 있는 구형 함수 (속도는 미세하게 더 빠름)
 // - querySelector: 아이디(#), 클래스(.), 자식태그(div > p) 등 CSS에서 쓰던 선택자 문법을 
 //   그대로 사용하여 어떤 복잡한 요소라도 다 찾아낼 수 있는 최신 만능 함수. 
-//   현대 프론트엔드 실무의 표준이므로 과제 채점 기준에서 강력하게 강제하고 있습니다!
 const themeToggleBtn = document.querySelector('#theme-toggle');
 
 // [화면 그리기 전담 함수] 오직 STATE 객체의 값만 보고 화면을 어떻게 그릴지 결정합니다.
@@ -99,34 +87,40 @@ function renderTheme() {
     const eyeblink = document.querySelector('#eyeblink-video');
     const profileImg = document.querySelector('#profile-img'); // 💡 방금 HTML에 추가한 이미지 선택
     if (STATE.isDarkMode) {
+        // data-theme 이란?
+        // - id나 class가 아닌 HTML5부터 지원하는 '커스텀 데이터 속성(Custom Data Attribute)'이다.
+        // - 개발자가 'data-' 뒤에 임의로 이름을 붙여(예: data-apple, data-theme) 태그에 데이터를 저장할 수 있는 기능이다.
+        // - class="dark" 대신 data-theme="dark"를 사용하는 이유:
+        //   class는 디자인(스타일링)을 위한 속성이고, data-theme은 현재 사이트의 테마 상태(State)를 나타내는 데이터임을 
+        //   명확히 분리(관심사의 분리)하여 코드 가독성을 높이기 위한 프론트엔드 실무 표준이다.
         document.body.setAttribute('data-theme', 'dark');
-        
-        // 💡 과제 루브릭: textContent vs innerHTML
-        // - textContent: 넣은 값을 순수 글자로만 취급하여 그대로 출력함.
-        // - innerHTML: 넣은 값 안에 HTML 태그(<i class...>)가 있으면, 실제 그래픽 요소로 렌더링해서 삽입함.
-        // 우리는 버튼 안에 '해 모양 아이콘 이미지'를 넣어야 하므로 innerHTML을 사용했습니다!
+
+        // textContent vs innerHTML (보안과 성능)
+        // 실무에서는 99% textContent를 기본값(Default)으로 사용해야 한다.
+        // - textContent: 넣은 값을 순수 글자로만 취급한다. (해커가 악성 <script> 태그를 넣어도 글자로 처리되어 XSS 해킹 방어 가능, 렌더링 속도 빠름)
+        // - innerHTML: 넣은 값 안에 HTML 태그가 있으면 실제 그래픽/코드로 렌더링해서 삽입한다. (악성 코드가 섞이면 그대로 실행되는 보안 취약점 존재, 파싱 과정 때문에 속도 느림)
+        // 여기서는 버튼 안에 '해 모양 아이콘(<i class...)'이라는 실제 폰트어썸 그래픽 태그를 렌더링해야 하는 '특수한 목적'이 있으므로 예외적으로 innerHTML을 사용했다.
         if (themeToggleBtn) themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
         if (profileImg) profileImg.src = './image/profile_dark.png'; // 다크모드용 이미지 적용
-        
-        // 💡 하드디스크 캐비닛에 "이 유저는 현재 다크모드임!" 이라고 영구 도장을 찍어둠
-        localStorage.setItem('portfolio_theme', 'dark'); 
-        
-        // 💡 .catch(()=>{}) : 브라우저의 깐깐한 오토플레이(Autoplay) 정책 방어막!
-        // 크롬/사파리는 유저가 화면을 클릭하기 전에 비디오를 강제 재생(play)하려고 하면 
-        // 빨간 에러를 뿜으며 자바스크립트를 멈춰버립니다.
-        // 그래서 ".catch(에러잡기) => {아무 행동도 하지 않음}" 이라는 침묵의 방패를 달아주어,
-        // 에러가 나더라도 전체 코드가 터지지 않고 부드럽게 무시하고 넘어가도록 처리한 실무 핵심 꿀팁입니다.
-        if (eyeblink && eyeblink.paused) eyeblink.play().catch(()=>{}); 
+
+        localStorage.setItem('portfolio_theme', 'dark');
+
+        // 💡 비디오 자동 재생(Autoplay)과 .catch() 방어막의 진실
+        // 1. 왜 새로고침하자마자 재생이 될까?: HTML 태그에 `muted`(음소거) 속성이 있기 때문이다. 
+        //    브라우저는 "소리가 안 나는 비디오"는 유저를 놀라게 하지 않으므로 예외적으로 자동 재생을 허락한다.
+        // 2. 그럼 .catch()는 왜 쓸까?: 아이폰(저전력 모드) 등 특정 깐깐한 환경에서는 무음 비디오조차 재생을 막고 에러를 뿜어낸다.
+        //    이때 에러 때문에 자바스크립트 전체가 뻗어버리는 대참사를 막기 위해, ".catch => {조용히 무시}" 라는 최후의 방패를 달아둔 것이다!
+        if (eyeblink && eyeblink.paused) eyeblink.play().catch(() => { });
     } else {
         document.body.setAttribute('data-theme', 'light');
         if (themeToggleBtn) themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
         if (profileImg) profileImg.src = './image/profile_light.png'; // 라이트모드용 이미지 적용
-        
+
         // 💡 하드디스크 캐비닛에 "이 유저는 현재 라이트모드임!" 이라고 영구 도장을 찍어둠
-        localStorage.setItem('portfolio_theme', 'light'); 
-        
-        // 💡 유저 요청: 라이트모드에서도 이스터에그처럼 눈알이 깜빡이도록 비디오 일시정지 해제
-        if (eyeblink && eyeblink.paused) eyeblink.play().catch(()=>{});
+        localStorage.setItem('portfolio_theme', 'light');
+
+        // 💡 라이트모드 비디오 재생 (위의 다크모드와 동일한 catch 방어막 적용)
+        if (eyeblink && eyeblink.paused) eyeblink.play().catch(() => { });
     }
 }
 
@@ -135,33 +129,30 @@ function renderTheme() {
 // ----------------------------------------------------
 renderTheme();
 
-// [이벤트 감지 (When-If-Then)] 
-// 💡 과제 루브릭 필수: HTML에 onclick 속성을 쓰지 않고, addEventListener로 연결할 것!
-// 
 // [onclick vs addEventListener의 결정적 차이]
 // 1. 관심사 분리(Separation of Concerns): 
 //    HTML 파일 안에는 <button onclick="changeTheme()"> 처럼 자바스크립트 코드를 섞어 쓰면 안 됩니다. 
-//    HTML은 뼈대만, JS는 논리만 담당하도록 완벽히 파일을 찢어놓는 것이 현대 프론트엔드의 철칙입니다.
+//    HTML은 뼈대만, JS는 논리만 담당하도록 완벽히 파일을 찢어놓는 것이 현대 프론트엔드의 철칙이다.
 // 2. 확장성 (가장 중요): 
-//    onclick은 덮어쓰기(Overwrite) 방식이라 한 요소에 1개의 이벤트만 달 수 있습니다. 
+//    onclick은 덮어쓰기(Overwrite) 방식이라 한 요소에 1개의 이벤트만 달 수 있다. 
 //    반면 addEventListener는 귀를 여러 개 다는 방식이라, 
-//    하나의 버튼 클릭에 10개의 각기 다른 함수를 동시에 실행하게 만들 수도 있습니다!
+//    하나의 버튼 클릭에 10개의 각기 다른 함수를 동시에 실행하게 만들 수도 있다!
 // [이 코드 블록의 작동 원리 해부]
 // 1. 누구랑 연결되어 있나?
-//    - 위에서 선언한 `themeToggleBtn` (즉, HTML의 <button id="theme-toggle">)과 연결되어 있습니다. (화면 우측 상단의 해/달 버튼)
+//    - 위에서 선언한 `themeToggleBtn` (즉, HTML의 <button id="theme-toggle">)과 연결되어 있다. (화면 우측 상단의 해/달 버튼)
 // 2. 어떻게 동작하는가?
-//    - if (themeToggleBtn): 방어 로직. 만약 HTML에서 누군가 실수로 저 버튼을 지웠다면, 에러를 내지 말고 그냥 넘어가라는 뜻입니다.
+//    - if (themeToggleBtn): 방어 로직. 만약 HTML에서 누군가 실수로 저 버튼을 지웠다면, 에러를 내지 말고 그냥 넘어가라는 뜻이다.
 //    - .addEventListener('click', ...): 버튼에 '클릭 감지기'를 달아놓고 유저가 누를 때까지 무한 대기합니다.
 //    - 유저가 클릭하면 아래 2단계가 순식간에 실행됩니다.
 //      👉 1단계 (뇌 구조 바꾸기): STATE.isDarkMode = !STATE.isDarkMode; 
-//           (! 기호는 반대로 뒤집으라는 뜻입니다. true면 false로, false면 true로 스위치를 똑딱 켭니다)
+//           (! 기호는 반대로 뒤집으라는 뜻이다. true면 false로, false면 true로 스위치를 똑딱 켠다)
 //      👉 2단계 (화면 다시 그리기): renderTheme();
 //           스위치가 켜졌으니, 화면 그리기 전담 반장을 불러서 "바뀐 상태에 맞춰서 화면 전체 다시 칠해!" 라고 명령합니다.
 //
 // 💡 과제 루브릭 (ES6 문법 필수 사용): `() => {}`
-//    이것이 바로 자바스크립트의 '화살표 함수(Arrow Function)'입니다!
-//    C#이나 C++ 개발자이신 유저님에게 아주 익숙한 '람다(Lambda) 식'과 정확히 똑같은 개념입니다.
-//    기존의 `function() {}` 보다 문법이 간결하고 this 바인딩 문제를 해결해주어 현대 JS 실무 표준으로 쓰입니다.
+//    이것이 바로 자바스크립트의 '화살표 함수(Arrow Function)'이다!
+//    C#이나 C++ 개발자에게 아주 익숙한 '람다(Lambda) 식'과 정확히 똑같은 개념이다.
+//    기존의 `function() {}` 보다 문법이 간결하고 this 바인딩 문제를 해결해주어 현대 JS 실무 표준으로 쓰인다.
 // 💡 추가 제안: 현재 익명 화살표 함수로 작성된 이벤트 핸들러들은 추후 재사용성 및 가독성을 높이기 위해 네이밍 함수(Named Function)로 분리할 것을 권장합니다.
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
@@ -185,11 +176,11 @@ if (videos.length > 0) {
         });
     });
 
-    // 💡 설계 제안: 스크롤(scroll)이나 리사이즈(resize) 이벤트는 매우 빈번히 발생하므로, 디바운스(Debounce)나 스로틀(Throttle)을 적용하여 핸들러를 경량화하는 것을 권장합니다.
+    // 💡 설계 제안: 스크롤(scroll)이나 리사이즈(resize) 이벤트는 매우 빈번히 발생하므로, 디바운스(Debounce)나 스로틀(Throttle)을 적용하여 핸들러를 경량화하는 것을 권장.
     window.addEventListener('scroll', () => {
         // [스크롤 퍼센트 구하는 공식의 핵심 원리 (단면도 비유)]
-        // 브라우저의 좌표계는 무조건 '맨 꼭대기(위)가 0px' 입니다. (스크롤을 내릴수록 숫자가 커짐)
-        // 웹페이지 전체 길이를 3000px, 유저의 모니터(브라우저 창) 세로 길이를 1000px이라 가정해 보겠습니다.
+        // 브라우저의 좌표계는 무조건 '맨 꼭대기(위)가 0px' 이다. (스크롤을 내릴수록 숫자가 커짐)
+        // 웹페이지 전체 길이를 3000px, 유저의 모니터(브라우저 창) 세로 길이를 1000px이라 가정해 보겠다.
         //
         // 1. 맨 처음 사이트에 접속했을 때 (스크롤 0%)
         //   0px +===================+ <-- scrollY = 0px (스크롤 안 내림)
@@ -199,7 +190,7 @@ if (videos.length > 0) {
         //       |                   |
         //       |                   | <-- 아직 안 보임
         // 3000px+-------------------+
-        // 유저의 모니터 창 크기(innerHeight)가 1000px이기 때문에, 스크롤을 하나도 안 내려도 이미 0~1000px 구간을 보고 있습니다.
+        // 유저의 모니터 창 크기(innerHeight)가 1000px이기 때문에, 스크롤을 하나도 안 내려도 이미 0~1000px 구간을 보고 있다.
         //
         // 2. 스크롤을 끝까지 다 내렸을 때 (스크롤 100%)
         //   0px +-------------------+
@@ -208,22 +199,22 @@ if (videos.length > 0) {
         //       ||                 || <-- 유저의 모니터 (1000px 차지)
         //       ||                 ||
         // 3000px+===================+
-        // 스크롤을 맨 밑바닥(3000px 위치)까지 내리면 모니터 창(1000px)은 2000~3000px 지점을 덮고 있게 됩니다.
+        // 스크롤을 맨 밑바닥(3000px 위치)까지 내리면 모니터 창(1000px)은 2000~3000px 지점을 덮고 있게 된다.
         //
         // 💡 결론: 왜 뺄셈을 하는가?
-        // 자바스크립트에서 window.scrollY는 "모니터의 윗부분 모서리가 위에서부터 몇 px 떨어져 있는가?"를 측정합니다.
-        // 위 그림처럼 모니터가 맨 밑바닥에 도달했을 때 모니터 윗부분의 위치는 3000px이 아니라 2000px입니다.
+        // 자바스크립트에서 window.scrollY는 "모니터의 윗부분 모서리가 위에서부터 몇 px 떨어져 있는가?"를 측정한다.
+        // 위 그림처럼 모니터가 맨 밑바닥에 도달했을 때 모니터 윗부분의 위치는 3000px이 아니라 2000px이다.
         // 그래서 "스크롤의 100% 한계점이 어디지?"를 계산할 때는 무조건:
-        // 전체 웹페이지 길이(3000) - 내 모니터 크기(1000) = 2000(최대 이동 가능 거리) 라는 빼기 공식이 나오게 됩니다!
+        // 전체 웹페이지 길이(3000) - 내 모니터 크기(1000) = 2000(최대 이동 가능 거리) 라는 빼기 공식이 나오게 된다!
         const maxScroll = document.body.scrollHeight - window.innerHeight;
         if (maxScroll <= 0) return;
-        
+
         let progress = window.scrollY / maxScroll;
-        
+
         // 스크롤 바운스 방지
         if (progress < 0) progress = 0;
         if (progress > 1) progress = 1;
-        
+
         // 초 단위 대신 '퍼센트(0~1)'를 목표치로 저장
         targetProgress = progress;
     });
@@ -232,11 +223,11 @@ if (videos.length > 0) {
     function smoothVideoLoop() {
         // Lerp 알고리즘으로 퍼센트를 부드럽게 이동
         currentProgress += (targetProgress - currentProgress) * 0.08;
-        
+
         // 화면에 있는 모든 비디오의 현재 프레임을 퍼센트에 맞게 각자 조종
         videos.forEach(video => {
             if (!STATE.isDarkMode) return; // 라이트모드일 때는 비디오 연산 전면 중단 (최적화)
-            
+
             if (!isNaN(video.duration) && video.duration > 0) {
                 const targetTime = video.duration * currentProgress;
                 if (Math.abs(video.currentTime - targetTime) > 0.005) {
@@ -244,11 +235,11 @@ if (videos.length > 0) {
                 }
             }
         });
-        
+
         requestAnimationFrame(smoothVideoLoop);
     }
-    
-    
+
+
     // 루프 시작
     requestAnimationFrame(smoothVideoLoop);
 }
@@ -266,11 +257,11 @@ if (eyeblinkVideo) {
     eyeblinkVideo.addEventListener('ended', () => {
         // 2초(2000) ~ 5초(5000) 사이의 랜덤 대기 시간 계산
         const randomDelay = Math.random() * 3000 + 2000;
-        
+
         setTimeout(() => {
             eyeblinkVideo.currentTime = 0; // 처음 프레임으로 되감기
             const playPromise = eyeblinkVideo.play();
-            
+
             // 크롬 브라우저의 절전 모드 등 강제 재생 차단 시 발생하는 AbortError 예외 처리
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
@@ -296,7 +287,7 @@ function getDynamicTexts() {
     }
 
     const themeName = STATE.isDarkMode ? "DARK_MODE" : "LIGHT_MODE";
-    
+
     return [
         `> User Environment : ${deviceName} Detected.`,
         `> UI Theme : ${themeName} Active.`,
@@ -312,10 +303,10 @@ let charIndex = 0;
 let isDeleting = false;
 
 function typeEffect() {
-    if(!typingText) return;
+    if (!typingText) return;
     const currentText = texts[textIndex];
-    
-    if(isDeleting) {
+
+    if (isDeleting) {
         typingText.textContent = currentText.substring(0, charIndex - 1);
         charIndex--;
     } else {
@@ -325,19 +316,19 @@ function typeEffect() {
 
     let speed = isDeleting ? 30 : 80;
 
-    if(!isDeleting && charIndex === currentText.length) {
+    if (!isDeleting && charIndex === currentText.length) {
         speed = 2000; // 문장 완성 후 대기
         isDeleting = true;
-    } else if(isDeleting && charIndex === 0) {
+    } else if (isDeleting && charIndex === 0) {
         isDeleting = false;
         textIndex = (textIndex + 1) % texts.length;
         speed = 500; // 다음 문장 시작 전 대기
     }
-    
+
     setTimeout(typeEffect, speed);
 }
 // 페이지 로드 후 1초 뒤 애니메이션 시작
-if(typingText) setTimeout(typeEffect, 1000);
+if (typingText) setTimeout(typeEffect, 1000);
 
 // ----------------------------------------------------
 // 4. Skills 네온 게이지 랜덤 애니메이션
@@ -350,7 +341,7 @@ function randomizeSkills() {
         bar.style.width = `${randomWidth}%`;
     });
 }
-if(skillBars.length > 0) {
+if (skillBars.length > 0) {
     setTimeout(randomizeSkills, 500);    // 초기 애니메이션
     setInterval(randomizeSkills, 2000);  // 2초마다 게이지 변동
 }
@@ -413,8 +404,8 @@ if (scrollTopBtn) {
 const GITHUB_USERNAME = 'wow2658';
 const projectGrid = document.querySelector('#project-grid');
 
-// 💡 상태 변경 규칙: 상태 객체(STATE) 갱신 시에는 직접 할당보다는 Object.assign() 등을 사용해 관리하고, 
-// 복잡한 상태 전환 시 변경 로그(예: console.log('상태 변경:', STATE))를 추가하면 디버깅이 더욱 용이합니다.
+// 상태 변경 규칙: 상태 객체(STATE) 갱신 시에는 직접 할당보다는 Object.assign() 등을 사용해 관리하고, 
+// 복잡한 상태 전환 시 변경 로그(예: console.log('상태 변경:', STATE))를 추가하면 디버깅이 더욱 용이하다.
 Object.assign(STATE, {
     repos: [],    // 원본 데이터
     filter: 'all', // 현재 선택된 필터
@@ -423,22 +414,18 @@ Object.assign(STATE, {
 
 const cardsPerPage = 4; // 데스크톱에서는 4개씩
 
-// ============================================================================
-// 💡 [코드 리뷰/면접 방어용 주석] GitHub API 연동 방식에 대한 기획 및 기술적 의도
-// ============================================================================
-// [과제 요구사항] 
-// - https://api.github.com/users/{id}/repos 호출 및 전체 섹션 상태(로딩/에러) 처리
+// // - https://api.github.com/users/{id}/repos 호출 및 전체 섹션 상태(로딩/에러) 처리
 // 
 // [본 프로젝트의 기술적 차별화 및 의도적 설계 변경]
 // 1. 단순 리스트 나열을 넘어, 포트폴리오의 핵심 프로젝트 4개를 엄선하여 각 저장소별 
-//    '유튜브 시연 영상'과 동적으로 매칭시키는 Rich UI(캐러셀)를 기획했습니다.
+//    '유튜브 시연 영상'과 동적으로 매칭시키는 Rich UI(캐러셀)를 기획했다.
 // 2. 이를 구현하기 위해 불필요한 전체 Repo 데이터를 불러오는 대신, 특정 핵심 Repo 
 //    4개의 엔드포인트(`repos/{id}/{repo}`)만 Promise.all()로 병렬 호출하여 
-//    네트워크 페이로드 크기를 줄이고 렌더링 성능을 최적화했습니다.
+//    네트워크 페이로드 크기를 줄이고 렌더링 성능을 최적화했다.
 // 3. API Rate Limit(403)이나 네트워크 단절 등 에러 발생 시, 화면 전체가 에러로 
 //    덮여버려 UX가 훼손되는 것을 막기 위해 '우아한 실패(Graceful Degradation)' 
-//    패턴을 도입했습니다. 통신 실패 시 즉각 Fallback(하드코딩된 더미 데이터 및 
-//    개별 에러 카드)으로 전환하여 레이아웃 무너짐 없이 서비스를 유지합니다.
+//    패턴을 도입했다. 통신 실패 시 즉각 Fallback(하드코딩된 더미 데이터 및 
+//    개별 에러 카드)으로 전환하여 레이아웃 무너짐 없이 서비스를 유지한다.
 // ============================================================================
 async function fetchGithubRepos() {
     if (!projectGrid) return;
@@ -447,36 +434,64 @@ async function fetchGithubRepos() {
         projectGrid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> 데이터 로딩 중...</div>';
 
         const targetRepos = [
-            'Unreal_IROAS', 
-            'Unreal_Left4Dead2', 
-            'Unity_OverCooked', 
+            'Unreal_IROAS',
+            'Unreal_Left4Dead2',
+            'Unity_OverCooked',
             'LyraDev_UE54'
         ];
-        
-        // 📝 [개념 설명] fetch와 API 통신
-        // fetch는 브라우저가 제공하는 심부름꾼입니다. "이 주소(URL)로 가서 데이터를 가져와!" 라고 시키는 함수입니다.
-        // 외부 서버(GitHub)에 다녀와야 하기 때문에 시간이 걸립니다. 이를 '비동기(Asynchronous)' 작업이라고 부릅니다.
-        const repoPromises = targetRepos.map(repoName => 
+
+        // 배열.map()과 fetch를 이용한 비동기 병렬 처리 (Parallel Asynchronous Requests)
+        // - fetch(): 지정된 URL로 HTTP GET 요청을 보내는 웹 API. 네트워크 통신이므로 Non-blocking(비동기)으로 작동하며, Promise 객체를 반환한다.
+        // - .map(): targetRepos 배열을 순회하며 4개의 독립적인 fetch 요청을 즉시 발생시킨다.
+        // - 직렬(순차적) 요청이 아닌 병렬(동시) 요청을 보내 네트워크 지연 시간을 최소화하는 성능 최적화 기법이다.
+        // - 자료형(Data Type): Array<Promise<Response>>
+        //   JS/Web API의 공식 내장 객체(클래스)들이 겹겹이 감싸진 마트료시카 구조이다.
+        //   1. Array: .map()이 반환하는 가장 바깥 껍데기 (배열)
+        //   2. Promise: 싱글 스레드 환경에서 비동기 연산의 최종 완료(성공/실패) 및 그 결괏값을 대리(Proxy)하는 제어 객체. 내부 상태(Pending, Fulfilled, Rejected) 추적을 통해 콜백 지옥(Callback Hell)을 방지한다.
+        //   3. Response: W3C Fetch API 스펙에 정의된 HTTP 응답 표준 인터페이스. HTTP Status, Headers 속성을 포함하며, Body 데이터를 메모리 효율적인 스트림(Stream) 형태로 제공한다.
+        //   맹점 주의: Promise 자체는 제네릭(Generic) 타입이므로 Promise<String> 등 어떤 자료형이든 품을 수 있다. 그러나 fetch() 함수는 W3C 웹 표준 스펙에 의해 무조건 Response 객체만을 품은 Promise를 반환하도록 설계(Hard-wired)되어 있다.
+        const repoPromises = targetRepos.map(repoName =>
             fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${repoName}`)
         );
-        
-        // 📝 [개념 설명] await과 Promise.all
-        // fetch 심부름꾼 4명을 동시에 출발시켰습니다(repoPromises 배열).
-        // Promise.all()은 이 4명의 심부름꾼이 모두 돌아올 때까지 하나로 묶어서 기다려주는 역할을 합니다.
-        // 'await' 키워드는 "이 심부름꾼들이 전부 도착할 때까지 다음 줄로 넘어가지 말고 여기서 잠깐 멈춰서 기다려!"라는 뜻입니다.
-        // await을 쓰기 위해서는 반드시 함수 앞에 'async' 키워드를 붙여줘야 합니다. (429번째 줄 참조)
+
+        // Promise.all()과 await을 통한 동기화 보장
+        // - Promise.all(): 배열 내의 모든 Promise가 fulfilled(성공)될 때까지 대기하는 메서드.
+        // - await: 비동기 작업이 완료될 때까지 이 함수(fetchGithubRepos)의 실행만 일시 정지(Suspend)시킨다.
+        //   * 핵심 오해 방지: 프로그램 전체가 멈추는 것이 절대 아니다! 이 함수가 대기하는 동안, 메인 스레드(Main Thread)는 
+        //     제어권을 돌려받아 브라우저의 UI 렌더링(60fps 로딩 스피너 애니메이션, 스크롤 등)을 멈춤 없이 부드럽게 계속 처리한다. (Non-blocking)
+        // - 결과적으로 4개의 병렬 통신이 모두 완료된 후에야 다음 로직으로 넘어가도록 제어하되, 화면 프리징은 완벽히 방지하는 모던 JS 패턴이다.
         const responses = await Promise.all(repoPromises);
-        
-        // 4명의 심부름꾼 중 단 한 명이라도 에러(404 Not Found, 403 Rate Limit 등)를 가져왔는지 검사합니다.
+
+        // 1. 화살표 함수(=>)와 배열 고차 함수(.find)의 결합
+        // - C#/C++의 람다(Lambda) 식과 동일한 문법인 화살표 함수를 사용해 배열을 순회한다.
+        // - 각 Response 객체를 'res'라는 임시 변수로 지칭하고, res.ok가 false인 첫 번째 원소를 추출한다.
+        // 
+        // 2. Response 객체와 HTTP 상태 코드 (Status Code)
+        // - failedResponse의 자료형은 Response 객체이며, 내부적으로 ok, status 등의 속성을 가진다.
+        // - 필수 HTTP 상태 코드 분류:
+        //   [200] OK: 정상 응답 (res.ok === true)
+        //   [403] Forbidden: 권한 없음 (예: GitHub API 트래픽 초과 차단)
+        //   [404] Not Found: 리소스를 찾을 수 없음 (예: 오타 또는 삭제된 저장소)
+        //   [500] Internal Server Error: 서버 내부 오류 (예: GitHub 서버 다운)
         const failedResponse = responses.find(res => !res.ok);
         if (failedResponse) {
-            throw new Error(`통신 에러 발생: ${failedResponse.status}`); // 에러가 발생하면 즉시 catch 블록으로 던집니다(이동합니다).
+            // failedResponse.status 속성을 통해 403, 404 등의 구체적인 에러 코드를 추출하여 예외를 발생시킨다.
+            throw new Error(`통신 에러 발생: ${failedResponse.status}`); // 에러 발생 시 catch 블록으로 제어권(Control Flow)을 넘긴다.
         }
 
-        // 📝 [개념 설명] json() 변환
-        // 심부름꾼이 가져온 택배(responses)는 아직 포장(HTTP Response 객체)이 안 뜯긴 상태입니다.
-        // .json()을 호출하여 포장을 뜯고 우리가 자바스크립트에서 쓸 수 있는 객체(Object) 형태로 변환합니다.
-        // 포장을 뜯는 작업도 시간이 걸리기 때문에 또 한 번 'await'으로 기다려줍니다.
+        // Response Body 파싱 (JSON) 및 2단계 Promise.all 구조의 이유
+        // 1. 왜 .json()을 쓰는가?
+        //    - 통신 직후의 Response 객체 내 Body 데이터는 아직 자바스크립트가 읽을 수 없는 '원시 바이트(Raw Byte) 스트림' 압축 상태이다.
+        //    - 이를 순수 자바스크립트 객체(JSON)로 변환(포장 뜯기)하는 전용 메서드가 .json()이다.
+        // 2. 왜 여기서 또 Promise.all()을 묶었는가?
+        //    - 데이터의 크기에 따라 포장을 뜯고 변환하는 작업 자체도 시간이 소요되므로, 자바스크립트 설계상 .json() 함수 역시 비동기로 동작하여 Promise를 반환한다.
+        //    - 즉, responses.map(res => res.json())은 다시 4개의 [Promise, Promise, Promise, Promise] 배열을 생성한다.
+        // 최종 데이터 상태 비교 (responses vs repos):
+        //    - responses: 통신 직후의 날것(Raw). Body 데이터가 압축된 바이트 스트림(Stream) 상태라 JS에서 당장 내부 프로퍼티를 읽을 수 없다.
+        //    - repos: .json() 파싱이 완료된 상태. 자바스크립트가 즉시 repo.name 등 내부 프로퍼티에 접근할 수 있는 완벽한 순수 객체(Object) 배열이다.
+        // 2단계 대기 요약:
+        //    - 윗줄의 첫 번째 Promise.all: "서버에서 4개의 통신 응답이 모두 도착할 때까지 대기" (네트워크 I/O 대기)
+        //    - 아랫줄의 두 번째 Promise.all: "도착한 4개의 응답 데이터를 전부 JSON으로 파싱 완료할 때까지 대기" (CPU 파싱 대기)
         const repos = await Promise.all(responses.map(res => res.json()));
 
         if (repos.length === 0) {
@@ -511,7 +526,7 @@ async function fetchGithubRepos() {
         };
 
         // 데이터를 정제하여 전역 배열에 저장
-        // 💡 원본 배열 불변성 보장: 원본 데이터(repos)를 훼손하지 않기 위해 .map()을 사용하여 순수 복사본 기반의 데이터 가공 파이프라인을 구축했습니다.
+        // 💡 원본 배열 불변성 보장: 원본 데이터(repos)를 훼손하지 않기 위해 .map()을 사용하여 순수 복사본 기반의 데이터 가공 파이프라인을 구축했다.
         STATE.repos = repos.map(repo => {
             let language = repo.language || 'Classified';
             if (repo.name === 'Unity_OverCooked') language = 'C#';
@@ -539,7 +554,7 @@ async function fetchGithubRepos() {
 
     } catch (error) {
         console.warn('GitHub API Error (Rate Limit). Using fallback data...', error);
-        
+
         const YOUTUBE_LINKS = {
             'Unreal_IROAS': 'ggYh9wlE8G4',
             'Unreal_Left4Dead2': 'Y8r53TZZkIY',
@@ -601,7 +616,7 @@ async function fetchGithubRepos() {
 // 필터 및 페이지네이션을 적용하여 화면을 그리는 함수
 function updateProjCarousel() {
     if (!projectGrid) return;
-    
+
     // 1. 필터링
     let filteredRepos = STATE.repos;
     if (STATE.filter !== 'all') {
@@ -611,7 +626,7 @@ function updateProjCarousel() {
     // 2. 모바일/데스크톱 표시 개수
     const currentCardsPerPage = window.innerWidth <= 768 ? 1 : cardsPerPage;
     const maxPage = Math.max(0, Math.ceil(filteredRepos.length / currentCardsPerPage) - 1);
-    
+
     // 페이지 범위를 벗어나지 않게 보정
     if (STATE.page > maxPage) STATE.page = maxPage;
 
@@ -650,16 +665,16 @@ function updateProjCarousel() {
                     </div>
                 `;
                 projectGrid.appendChild(card);
-                
+
                 // 📝 [개념 설명] Fire and Forget (동기 함수에서 비동기 함수 호출하기)
-                // 현재 이 화살표 함수 `() => { ... }`는 앞에 async가 안 붙은 일반(동기) 함수입니다.
-                // 하지만 그 안에서 async 함수인 fetchGithubRepos()를 그냥 호출하고 있습니다. 어떻게 가능할까요?
+                // 현재 이 화살표 함수 `() => { ... }`는 앞에 async가 안 붙은 일반(동기) 함수이다.
+                // 하지만 그 안에서 async 함수인 fetchGithubRepos()를 그냥 호출하고 있습니다. 어떻게 가능할까?
                 // 
                 // 이는 유니티에서 일반 버튼 클릭 이벤트(void OnClick) 안에 StartCoroutine(Routine())을 
-                // 그냥 던져놓고(실행시키고) 잊어버리는 것과 완전히 동일한 원리입니다. (또는 UniTask의 .Forget())
+                // 그냥 던져놓고(실행시키고) 잊어버리는 것과 완전히 동일한 원리이다. (또는 UniTask의 .Forget())
                 // 
-                // 버튼 클릭 이벤트는 fetchGithubRepos가 끝날 때까지 굳이 'await'으로 멈춰서 기다릴 필요가 없습니다.
-                // 그저 "백그라운드에서 다시 API 통신 시작해!"라고 명령(Fire)만 내리고 클릭 이벤트 자체는 즉시 종료(Forget)하면 되기 때문입니다.
+                // 버튼 클릭 이벤트는 fetchGithubRepos가 끝날 때까지 굳이 'await'으로 멈춰서 기다릴 필요가 없다.
+                // 그저 "백그라운드에서 다시 API 통신 시작해!"라고 명령(Fire)만 내리고 클릭 이벤트 자체는 즉시 종료(Forget)하면 되기 때문이다.
                 const retryBtn = card.querySelector('.dummy-retry-btn');
                 if (retryBtn) {
                     retryBtn.addEventListener('click', () => {
@@ -692,7 +707,7 @@ function updateProjCarousel() {
                     </div>
                 `;
                 projectGrid.appendChild(card);
-                
+
                 // 1.5초 후 로딩 -> 빈 상태로 전환 (시뮬레이션)
                 setTimeout(() => {
                     const loader = card.querySelector('.dummy-loader');
@@ -704,9 +719,9 @@ function updateProjCarousel() {
                 }, 1500);
                 return;
             }
-            
-            const videoHtml = youtubeId 
-                ? `<div class="project-video"><iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>` 
+
+            const videoHtml = youtubeId
+                ? `<div class="project-video"><iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
                 : '';
 
             card.innerHTML = `
@@ -757,7 +772,7 @@ window.addEventListener('resize', () => {
 });
 
 // 필터 버튼 이벤트 달기 (상태 관리 패턴 적용)
-// 💡 [이벤트 -> 상태 -> 렌더링] 흐름의 두 번째 예시입니다.
+// 💡 [이벤트 -> 상태 -> 렌더링] 흐름의 두 번째 예시이다.
 const filterBtns = document.querySelectorAll('.filter-btn');
 filterBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -765,13 +780,13 @@ filterBtns.forEach(btn => {
         filterBtns.forEach(b => b.classList.remove('active'));
         // 누른 버튼에 active 추가
         e.target.classList.add('active');
-        
-        // 👉 1. [상태 변경] DOM(화면)의 요소들을 직접 숨기거나 지우지 않습니다.
-        // 오직 내 머릿속 데이터(STATE.filter)만 바꿉니다.
+
+        // 👉 1. [상태 변경] DOM(화면)의 요소들을 직접 숨기거나 지우지 않는다.
+        // 오직 내 머릿속 데이터(STATE.filter)만 바꾼다.
         STATE.filter = e.target.getAttribute('data-filter');
         STATE.page = 0; // 페이지도 1페이지로 리셋
 
-        // 👉 2. [화면 렌더링] 바뀐 상태를 토대로 화면 그리기 전담 반장을 호출합니다.
+        // 👉 2. [화면 렌더링] 바뀐 상태를 토대로 화면 그리기 전담 반장을 호출한다.
         updateProjCarousel();
     });
 });
@@ -815,7 +830,7 @@ const effectImages = [
 function showLightboxImage(index) {
     if (index < 0) index = effectImages.length - 1; // 처음에서 이전 누르면 끝으로 루프
     if (index >= effectImages.length) index = 0; // 끝에서 다음 누르면 처음으로 루프
-    
+
     currentLightboxIndex = index;
     lightboxImg.src = effectImages[index].src;
     lightboxCaption.textContent = effectImages[index].caption;
@@ -825,16 +840,16 @@ function showLightboxImage(index) {
 function closeLightbox() {
     lightboxModal.style.display = 'none';
     if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(() => { });
     }
     document.body.style.overflow = 'auto'; // 스크롤 잠금 해제
-    
+
     // 라이트박스 모드 초기화 (이미지 뷰어 복원)
     const customWrapper = document.getElementById('lightbox-custom-wrapper');
     const lightboxImageContainer = document.querySelector('.lightbox-image-container');
     const lightboxImg = document.getElementById('lightbox-img');
     const lightboxControls = document.querySelectorAll('.lightbox-prev, .lightbox-next');
-    
+
     if (customWrapper) {
         customWrapper.style.display = 'none';
         customWrapper.innerHTML = '';
@@ -863,13 +878,13 @@ function renderEffectGallery() {
     const card = document.createElement('div');
     card.className = 'project-card gallery-card fade-in';
     if (window.scrollObserver) window.scrollObserver.observe(card);
-    
+
     // 썸네일 이미지
     const img = document.createElement('img');
     img.src = effectImages[inlineGalleryIndex].src;
     img.alt = effectImages[inlineGalleryIndex].caption;
     card.appendChild(img);
-    
+
     // 카드 내장(Inline) 좌우 화살표 생성
     const inlinePrev = document.createElement('span');
     inlinePrev.innerHTML = '&#10094;';
@@ -880,13 +895,13 @@ function renderEffectGallery() {
     inlineNext.innerHTML = '&#10095;';
     inlineNext.className = 'inline-next';
     card.appendChild(inlineNext);
-    
+
     // 우측 하단 슬라이드 장수 표시 (캡슐 오버레이 제거, 단순 텍스트화)
     const badge = document.createElement('div');
     badge.className = 'inline-badge';
     badge.textContent = `1 / ${effectImages.length}`;
     card.appendChild(badge);
-    
+
     // 인라인 화살표 클릭 이벤트 (이전)
     inlinePrev.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -909,7 +924,7 @@ function renderEffectGallery() {
         img.alt = effectImages[inlineGalleryIndex].caption;
         badge.textContent = `${inlineGalleryIndex + 1} / ${effectImages.length}`;
     }
-    
+
     // 카드 자체(또는 이미지) 클릭 시 라이트박스 오픈 및 전체화면(PC/모바일 공통)
     card.addEventListener('click', () => {
         showLightboxImage(inlineGalleryIndex); // 현재 인라인에서 보던 인덱스부터 오픈
@@ -930,7 +945,7 @@ function renderEffectGallery() {
             });
         }
     });
-    
+
     effectGrid.appendChild(card);
 }
 
@@ -972,8 +987,8 @@ if (lightboxModal) {
     // 팝업 바깥쪽(검은 배경 및 여백)을 클릭해도 닫히도록 설정
     window.addEventListener('click', (e) => {
         // 모달 배경이거나, 이미지 바깥의 래퍼들을 클릭했을 때만 닫기
-        if (e.target === lightboxModal || 
-            e.target.classList.contains('lightbox-content-wrapper') || 
+        if (e.target === lightboxModal ||
+            e.target.classList.contains('lightbox-content-wrapper') ||
             e.target.classList.contains('lightbox-image-container')) {
             requestCloseLightbox();
         }
@@ -1073,13 +1088,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // ----------------------------------------------------
 // 12. Contact Form Validation (문의 폼 유효성 검증)
 // ----------------------------------------------------
-// 💡 [이벤트 -> 상태 -> 렌더링] 흐름의 마지막 예시입니다.
+// 💡 [이벤트 -> 상태 -> 렌더링] 흐름의 마지막 예시이다.
 const contactForm = document.getElementById('contact-form');
 if (contactForm) {
     contactForm.addEventListener('submit', (event) => {
         // 1. [이벤트 차단] 기본 제출 동작 방지 (페이지 새로고침 방지)
         event.preventDefault();
-        
+
         // 🛡️ 스팸 방어 3: 쿨타임(Throttling) 체크 (3분 = 180000ms)
         const lastSentTime = localStorage.getItem('last_email_sent');
         if (lastSentTime) {
@@ -1090,10 +1105,10 @@ if (contactForm) {
                 return; // 전송 중단
             }
         }
-        
-        // 👉 2. [상태 선언] isValid 라는 데이터 상태를 먼저 만듭니다.
+
+        // 👉 2. [상태 선언] isValid 라는 데이터 상태를 먼저 만든다.
         let isValid = true; // 💡 폼 유효성 플래그 명시적 초기화
-        
+
         // 2. 이름 검증 (빈 필드 불가)
         const nameInput = document.getElementById('name');
         const nameError = document.getElementById('name-error');
@@ -1104,12 +1119,12 @@ if (contactForm) {
         } else {
             nameError.style.display = 'none';
         }
-        
+
         // 3. 이메일 검증 (빈 필드 불가 및 정규식)
         const emailInput = document.getElementById('email');
         const emailError = document.getElementById('email-error');
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // 간단한 이메일 정규식
-        
+
         if (!emailInput.value.trim()) {
             emailError.textContent = '이메일을 입력해주세요.';
             emailError.style.display = 'block';
@@ -1121,7 +1136,7 @@ if (contactForm) {
         } else {
             emailError.style.display = 'none';
         }
-        
+
         // 4. 메시지 검증 (빈 필드 불가)
         const messageInput = document.getElementById('message');
         const messageError = document.getElementById('message-error');
@@ -1132,7 +1147,7 @@ if (contactForm) {
         } else {
             messageError.style.display = 'none';
         }
-        
+
         // 5. 검증 통과 시 성공 처리 및 실제 메일 발송 (AJAX)
         if (isValid) {
             const submitBtn = contactForm.querySelector('.submit-btn');
@@ -1148,34 +1163,34 @@ if (contactForm) {
                     'Accept': 'application/json'
                 }
             })
-            .then(response => {
-                if (response.ok) {
-                    // 🛡️ 성공 시 현재 시간을 로컬스토리지에 저장하여 쿨타임 시작
-                    localStorage.setItem('last_email_sent', Date.now().toString());
+                .then(response => {
+                    if (response.ok) {
+                        // 🛡️ 성공 시 현재 시간을 로컬스토리지에 저장하여 쿨타임 시작
+                        localStorage.setItem('last_email_sent', Date.now().toString());
 
-                    const successMsg = document.getElementById('success-msg');
-                    successMsg.style.display = 'block';
-                    
-                    // 폼 초기화
-                    contactForm.reset();
-                    
-                    // 3초 후 성공 메시지 숨김
-                    setTimeout(() => {
-                        successMsg.style.display = 'none';
-                    }, 3000);
-                } else {
-                    alert('전송 중 문제가 발생했습니다. Endpoint 주소를 확인해주세요.');
-                }
-            })
-            .catch(error => {
-                alert('네트워크 오류가 발생했습니다.');
-                console.error(error);
-            })
-            .finally(() => {
-                // 버튼 상태 원상 복구
-                submitBtn.textContent = originalBtnText;
-                submitBtn.disabled = false;
-            });
+                        const successMsg = document.getElementById('success-msg');
+                        successMsg.style.display = 'block';
+
+                        // 폼 초기화
+                        contactForm.reset();
+
+                        // 3초 후 성공 메시지 숨김
+                        setTimeout(() => {
+                            successMsg.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        alert('전송 중 문제가 발생했습니다. Endpoint 주소를 확인해주세요.');
+                    }
+                })
+                .catch(error => {
+                    alert('네트워크 오류가 발생했습니다.');
+                    console.error(error);
+                })
+                .finally(() => {
+                    // 버튼 상태 원상 복구
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
+                });
         }
     });
 }
@@ -1269,14 +1284,14 @@ if (particleCanvas) {
                 let dx = this.x - mouse.x;
                 let dy = this.y - mouse.y;
                 let distanceSq = dx * dx + dy * dy;
-                
+
                 if (distanceSq < mouse.radius) {
                     // 밀어내는 힘 계산 (가까울수록 강함)
                     let distance = Math.sqrt(distanceSq);
                     let forceDirectionX = dx / distance;
                     let forceDirectionY = dy / distance;
                     let force = (mouse.radius - distanceSq) / mouse.radius;
-                    
+
                     // 속도에 힘을 더해서 밀려나게 함
                     this.x += forceDirectionX * force * 5;
                     this.y += forceDirectionY * force * 5;
@@ -1356,11 +1371,11 @@ if (particleCanvas) {
 
     function animateParticles() {
         requestAnimationFrame(animateParticles);
-        
+
         // 현재 테마에 따라 파티클 색상 결정 (다크모드: 노란색, 라이트모드: 검은색)
         const isDark = document.body.getAttribute('data-theme') === 'dark';
         const colorRGB = isDark ? '255, 234, 0' : '0, 0, 0';
-        
+
         ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
         for (let i = 0; i < particlesArray.length; i++) {
             particlesArray[i].update();
