@@ -101,7 +101,7 @@ function renderTheme() {
         // - innerHTML: 넣은 값 안에 HTML 태그가 있으면 실제 그래픽/코드로 렌더링해서 삽입한다. (악성 코드가 섞이면 그대로 실행되는 보안 취약점 존재, 파싱 과정 때문에 속도 느림)
         // 여기서는 버튼 안에 '해 모양 아이콘(<i class...)'이라는 실제 폰트어썸 그래픽 태그를 렌더링해야 하는 '특수한 목적'이 있으므로 예외적으로 innerHTML을 사용했다.
         if (themeToggleBtn) themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-        if (profileImg) profileImg.src = './image/profile_dark.png'; // 다크모드용 이미지 적용
+        if (profileImg) profileImg.src = './images/profile_dark.png'; // 다크모드용 이미지 적용
 
         localStorage.setItem('portfolio_theme', 'dark');
 
@@ -114,7 +114,7 @@ function renderTheme() {
     } else {
         document.body.setAttribute('data-theme', 'light');
         if (themeToggleBtn) themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
-        if (profileImg) profileImg.src = './image/profile_light.png'; // 라이트모드용 이미지 적용
+        if (profileImg) profileImg.src = './images/profile_light.png'; // 라이트모드용 이미지 적용
 
         // 💡 하드디스크 캐비닛에 "이 유저는 현재 라이트모드임!" 이라고 영구 도장을 찍어둠
         localStorage.setItem('portfolio_theme', 'light');
@@ -404,15 +404,57 @@ if (scrollTopBtn) {
 const GITHUB_USERNAME = 'wow2658';
 const projectGrid = document.querySelector('#project-grid');
 
-// 상태 변경 규칙: 상태 객체(STATE) 갱신 시에는 직접 할당보다는 Object.assign() 등을 사용해 관리하고, 
-// 복잡한 상태 전환 시 변경 로그(예: console.log('상태 변경:', STATE))를 추가하면 디버깅이 더욱 용이하다.
-Object.assign(STATE, {
-    repos: [],    // 원본 데이터
-    filter: 'all', // 현재 선택된 필터
-    page: 0       // 현재 페이지 번호
-});
-
 const cardsPerPage = 4; // 데스크톱에서는 4개씩
+
+// ----------------------------------------------------
+// 6-1. 프로젝트 공통 상수 및 포매팅 함수 (DRY 원칙 적용)
+// ----------------------------------------------------
+const YOUTUBE_LINKS = {
+    'Unreal_IROAS': 'ggYh9wlE8G4',
+    'Unreal_Left4Dead2': 'Y8r53TZZkIY',
+    'Unity_OverCooked': 'NUkG66NQ4tA',
+    'LyraDev_UE54': 'fYhED5rY9Uo'
+};
+
+const REPO_METADATA = {
+    'Unreal_IROAS': {
+        title: 'Unreal5 VR',
+        description: 'Boss, enemy 프로그래밍, 시네마틱 담당'
+    },
+    'Unreal_Left4Dead2': {
+        title: 'Unreal5 멀티FPS',
+        description: 'Player, 시네마틱 담당'
+    },
+    'Unity_OverCooked': {
+        title: 'Unity 탑뷰 파티',
+        description: '프로그래밍 담당'
+    },
+    'LyraDev_UE54': {
+        title: 'Unreal5 Lyra',
+        description: '멀티 TPS 프로그래밍, 레벨디자인'
+    }
+};
+
+// 💡 공통 포매팅 함수: try와 catch 양쪽에서 똑같이 쓰이는 가공 로직을 하나로 통합
+const formatRepoData = (repo) => {
+    let language = repo.language || 'Classified';
+    
+    // GitHub Linguist(언어 판별 AI)의 한계를 보완하는 예외 처리 (수동 덮어쓰기)
+    // - 언리얼(Unreal): C++ 소스 코드 비중이 압도적이므로 깃허브가 'C++'로 정확히 판별한다.
+    // - 유니티(Unity): 실제 핵심 로직은 C#이지만, 프로젝트 구조상 .meta, .mat, .shader 등의 에셋 및 
+    //   설정 파일이 용량의 대부분을 차지한다. 이로 인해 깃허브가 프로젝트 메인 언어를 'C#'이 아닌 
+    //   'ShaderLab' 등으로 오진(False Positive)하는 고질적인 문제가 발생하므로 강제로 C#을 할당한다.
+    if (repo.name === 'Unity_OverCooked') language = 'C#';
+
+    const meta = REPO_METADATA[repo.name] || {};
+    return {
+        ...repo,
+        displayLanguage: language,
+        youtubeId: YOUTUBE_LINKS[repo.name],
+        displayName: meta.title || repo.name,
+        displayDesc: meta.description || repo.description || '상세 정보가 업데이트 중입니다.'
+    };
+};
 
 // // - https://api.github.com/users/{id}/repos 호출 및 전체 섹션 상태(로딩/에러) 처리
 // 
@@ -464,10 +506,12 @@ async function fetchGithubRepos() {
 
         // 1. 화살표 함수(=>)와 배열 고차 함수(.find)의 결합
         // - C#/C++의 람다(Lambda) 식과 동일한 문법인 화살표 함수를 사용해 배열을 순회한다.
-        // - 각 Response 객체를 'res'라는 임시 변수로 지칭하고, res.ok가 false인 첫 번째 원소를 추출한다.
+        // - res 파라미터는 반환값이 아니라, 배열에서 하나씩 꺼내온 단일 'Response 객체(입력값)'를 의미한다.
+        // - 화살표 우측(!res.ok)은 조건식이며, 이 조건이 true가 되는 순간 .find()는 배열 순회를 즉시 중단한다.
+        // - .filter()(배열 반환)와 달리, .find()는 조건에 맞는 '단일 객체 딱 1개'만 반환하며, 못 찾으면 undefined를 반환한다.
         // 
         // 2. Response 객체와 HTTP 상태 코드 (Status Code)
-        // - failedResponse의 자료형은 Response 객체이며, 내부적으로 ok, status 등의 속성을 가진다.
+        // - failedResponse의 자료형은 단일 Response 객체(또는 undefined)이며, 내부적으로 ok, status 등의 속성을 가진다.
         // - 필수 HTTP 상태 코드 분류:
         //   [200] OK: 정상 응답 (res.ok === true)
         //   [403] Forbidden: 권한 없음 (예: GitHub API 트래픽 초과 차단)
@@ -499,47 +543,10 @@ async function fetchGithubRepos() {
             return;
         }
 
-        const YOUTUBE_LINKS = {
-            'Unreal_IROAS': 'ggYh9wlE8G4',
-            'Unreal_Left4Dead2': 'Y8r53TZZkIY',
-            'Unity_OverCooked': 'NUkG66NQ4tA',
-            'LyraDev_UE54': 'fYhED5rY9Uo'
-        };
-
-        const REPO_METADATA = {
-            'Unreal_IROAS': {
-                title: 'Unreal5 VR',
-                description: 'Boss, enemy 프로그래밍, 시네마틱 담당'
-            },
-            'Unreal_Left4Dead2': {
-                title: 'Unreal5 멀티FPS',
-                description: 'Player, 시네마틱 담당'
-            },
-            'Unity_OverCooked': {
-                title: 'Unity 탑뷰 파티',
-                description: '프로그래밍 담당'
-            },
-            'LyraDev_UE54': {
-                title: 'Unreal5 Lyra',
-                description: '멀티 TPS 프로그래밍, 레벨디자인'
-            }
-        };
-
         // 데이터를 정제하여 전역 배열에 저장
-        // 💡 원본 배열 불변성 보장: 원본 데이터(repos)를 훼손하지 않기 위해 .map()을 사용하여 순수 복사본 기반의 데이터 가공 파이프라인을 구축했다.
-        STATE.repos = repos.map(repo => {
-            let language = repo.language || 'Classified';
-            if (repo.name === 'Unity_OverCooked') language = 'C#';
-
-            const meta = REPO_METADATA[repo.name] || {};
-            return {
-                ...repo,
-                displayLanguage: language,
-                youtubeId: YOUTUBE_LINKS[repo.name],
-                displayName: meta.title || repo.name,
-                displayDesc: meta.description || repo.description || '상세 정보가 업데이트 중입니다.'
-            };
-        });
+        // 💡 원본 배열 불변성 보장: 원본 데이터를 훼손하지 않기 위해 .map()을 사용하여 순수 복사본 기반의 데이터 가공 파이프라인을 구축했다.
+        // 외부로 분리한 공용 포매팅 함수(formatRepoData)를 재사용하여 DRY 원칙을 준수한다.
+        STATE.repos = repos.map(formatRepoData);
 
         // --- 🎨 UI 시뮬레이션용 더미 데이터 삽입 ---
         // 왼쪽 끝에 로딩->에러 프레임 추가
@@ -555,32 +562,6 @@ async function fetchGithubRepos() {
     } catch (error) {
         console.warn('GitHub API Error (Rate Limit). Using fallback data...', error);
 
-        const YOUTUBE_LINKS = {
-            'Unreal_IROAS': 'ggYh9wlE8G4',
-            'Unreal_Left4Dead2': 'Y8r53TZZkIY',
-            'Unity_OverCooked': 'NUkG66NQ4tA',
-            'LyraDev_UE54': 'fYhED5rY9Uo'
-        };
-
-        const REPO_METADATA = {
-            'Unreal_IROAS': {
-                title: 'Unreal5 VR',
-                description: 'Boss, enemy 프로그래밍, 시네마틱 담당'
-            },
-            'Unreal_Left4Dead2': {
-                title: 'Unreal5 멀티FPS',
-                description: 'Player, 시네마틱 담당'
-            },
-            'Unity_OverCooked': {
-                title: 'Unity 탑뷰 파티',
-                description: '프로그래밍 담당'
-            },
-            'LyraDev_UE54': {
-                title: 'Unreal5 Lyra',
-                description: '멀티 TPS 프로그래밍, 레벨디자인'
-            }
-        };
-
         // 차단 시 임시로 보여줄 폴백(Fallback) 하드코딩 데이터
         const fallbackRepos = [
             { name: 'Unreal_IROAS', language: 'C++', html_url: 'https://github.com/gonootago/Unreal_IROAS' },
@@ -590,19 +571,8 @@ async function fetchGithubRepos() {
         ];
 
         // 👉 1. [상태 변경] 통신 실패 시에도 전역 상태(STATE.repos) 배열을 가짜 데이터로 덮어씌웁니다.
-        STATE.repos = fallbackRepos.map(repo => {
-            let language = repo.language || 'Classified';
-            if (repo.name === 'Unity_OverCooked') language = 'C#';
-
-            const meta = REPO_METADATA[repo.name] || {};
-            return {
-                ...repo,
-                displayLanguage: language,
-                youtubeId: YOUTUBE_LINKS[repo.name],
-                displayName: meta.title || repo.name,
-                displayDesc: meta.description || repo.description || '상세 정보가 업데이트 중입니다.'
-            };
-        });
+        // try 블록과 완벽하게 동일한 포매팅 함수(formatRepoData)를 재사용하여 코드 중복을 제거함.
+        STATE.repos = fallbackRepos.map(formatRepoData);
 
         // --- 🎨 UI 시뮬레이션용 더미 데이터 삽입 ---
         STATE.repos.push({ isDummyError: true, displayLanguage: 'Dummy' });
@@ -811,19 +781,19 @@ let currentLightboxIndex = 0;
 
 // WebP 및 PNG 이펙트 슬라이드 전체 목록
 const effectImages = [
-    { src: './image/effect/슬라이드20.PNG', caption: '이펙트 포트폴리오 슬라이드 20' },
-    { src: './image/effect/슬라이드21페이지.webp', caption: '이펙트 포트폴리오 슬라이드 21' },
-    { src: './image/effect/슬라이드22페이지.webp', caption: '이펙트 포트폴리오 슬라이드 22' },
-    { src: './image/effect/슬라이드23페이지.webp', caption: '이펙트 포트폴리오 슬라이드 23' },
-    { src: './image/effect/슬라이드24.PNG', caption: '이펙트 포트폴리오 슬라이드 24' },
-    { src: './image/effect/슬라이드25페이지.webp', caption: '이펙트 포트폴리오 슬라이드 25' },
-    { src: './image/effect/슬라이드26.PNG', caption: '이펙트 포트폴리오 슬라이드 26' },
-    { src: './image/effect/슬라이드27.PNG', caption: '이펙트 포트폴리오 슬라이드 27' },
-    { src: './image/effect/슬라이드28.PNG', caption: '이펙트 포트폴리오 슬라이드 28' },
-    { src: './image/effect/슬라이드37.PNG', caption: '이펙트 포트폴리오 슬라이드 37' },
-    { src: './image/effect/슬라이드38.PNG', caption: '이펙트 포트폴리오 슬라이드 38' },
-    { src: './image/effect/슬라이드39.PNG', caption: '이펙트 포트폴리오 슬라이드 39' },
-    { src: './image/effect/슬라이드40.PNG', caption: '이펙트 포트폴리오 슬라이드 40' }
+    { src: './images/effect/슬라이드20.PNG', caption: '이펙트 포트폴리오 슬라이드 20' },
+    { src: './images/effect/슬라이드21페이지.webp', caption: '이펙트 포트폴리오 슬라이드 21' },
+    { src: './images/effect/슬라이드22페이지.webp', caption: '이펙트 포트폴리오 슬라이드 22' },
+    { src: './images/effect/슬라이드23페이지.webp', caption: '이펙트 포트폴리오 슬라이드 23' },
+    { src: './images/effect/슬라이드24.PNG', caption: '이펙트 포트폴리오 슬라이드 24' },
+    { src: './images/effect/슬라이드25페이지.webp', caption: '이펙트 포트폴리오 슬라이드 25' },
+    { src: './images/effect/슬라이드26.PNG', caption: '이펙트 포트폴리오 슬라이드 26' },
+    { src: './images/effect/슬라이드27.PNG', caption: '이펙트 포트폴리오 슬라이드 27' },
+    { src: './images/effect/슬라이드28.PNG', caption: '이펙트 포트폴리오 슬라이드 28' },
+    { src: './images/effect/슬라이드37.PNG', caption: '이펙트 포트폴리오 슬라이드 37' },
+    { src: './images/effect/슬라이드38.PNG', caption: '이펙트 포트폴리오 슬라이드 38' },
+    { src: './images/effect/슬라이드39.PNG', caption: '이펙트 포트폴리오 슬라이드 39' },
+    { src: './images/effect/슬라이드40.PNG', caption: '이펙트 포트폴리오 슬라이드 40' }
 ];
 
 // 특정 인덱스의 이미지를 라이트박스에 세팅하는 함수
@@ -1026,8 +996,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const animVideo = document.getElementById('ta-anim-video');
     if (animVideo) {
         const animSources = [
-            './image/3danimation/Gif6.webm',
-            './image/3danimation/Gif8.webm'
+            './images/3danimation/Gif6.webm',
+            './images/3danimation/Gif8.webm'
         ];
         let currentAnimIndex = 0;
 
@@ -1052,9 +1022,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (artBaseImg && artOverlayImg && artPrevBtn && artNextBtn && artSlider) {
         const artSets = [
-            { after: './image/2dart/1-1.webp', before: './image/2dart/1-2.webp' },
-            { after: './image/2dart/2-1.jpg', before: './image/2dart/2-2.jpg' },
-            { after: './image/2dart/3-1.jpg', before: './image/2dart/3-2.jpg' }
+            { after: './images/2dart/1-1.webp', before: './images/2dart/1-2.webp' },
+            { after: './images/2dart/2-1.jpg', before: './images/2dart/2-2.jpg' },
+            { after: './images/2dart/3-1.jpg', before: './images/2dart/3-2.jpg' }
         ];
         let currentArtIndex = 0;
 
