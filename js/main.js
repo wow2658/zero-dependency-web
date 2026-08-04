@@ -31,13 +31,13 @@ let savedTheme = null;
 try {
     savedTheme = localStorage.getItem('portfolio_theme');
 } catch (e) {
-    console.warn("LocalStorage 접근 실패 (권한 문제). 기본 테마로 설정합니다.");
+    console.warn("LocalStorage 접근 실패 (권한 문제). 기본 테마로 설정한다.");
 }
 
 // [초기 상태 결정 로직 (삼항 연산자 Fallback)]
-// - 사이트에 태어나서 처음 온 유저는 localStorage에 기록이 없으므로 savedTheme에 'null'이 들어갑니다.
-// - 만약 "savedTheme === 'light' ? false : true" 로 짰다면: null은 'light'가 아니므로 무조건 뒤의 true(다크모드)가 기본값이 됩니다.
-// - 하지만 "savedTheme === 'dark' ? true : false" 로 짜면: null은 'dark'가 아니므로 무조건 뒤의 false(라이트모드)가 기본값이 됩니다.
+// - 사이트에 태어나서 처음 온 유저는 localStorage에 기록이 없으므로 savedTheme에 'null'이 들어간다.
+// - 만약 "savedTheme === 'light' ? false : true" 로 짰다면: null은 'light'가 아니므로 무조건 뒤의 true(다크모드)가 기본값이 된다.
+// - 하지만 "savedTheme === 'dark' ? true : false" 로 짜면: null은 'dark'가 아니므로 무조건 뒤의 false(라이트모드)가 기본값이 된다.
 // - 💡 즉, "명시적으로 다크모드('dark')를 선택한 유저가 아니면, 첫 방문자(null)를 포함한 나머지는 싹 다 라이트모드로 밀어버리겠다"는 실무 테크닉이다.
 let initialDarkMode = true;
 if (savedTheme) {
@@ -82,7 +82,7 @@ const STATE = {
 //   그대로 사용하여 어떤 복잡한 요소라도 다 찾아낼 수 있는 최신 만능 함수. 
 const themeToggleBtn = document.querySelector('#theme-toggle');
 
-// [화면 그리기 전담 함수] 오직 STATE 객체의 값만 보고 화면을 어떻게 그릴지 결정합니다.
+// [화면 그리기 전담 함수] 오직 STATE 객체의 값만 보고 화면을 어떻게 그릴지 결정한다.
 function renderTheme() {
     const eyeblink = document.querySelector('#eyeblink-video');
     const profileImg = document.querySelector('#profile-img'); // 💡 방금 HTML에 추가한 이미지 선택
@@ -131,7 +131,7 @@ renderTheme();
 
 // [onclick vs addEventListener의 결정적 차이]
 // 1. 관심사 분리(Separation of Concerns): 
-//    HTML 파일 안에는 <button onclick="changeTheme()"> 처럼 자바스크립트 코드를 섞어 쓰면 안 됩니다. 
+//    HTML 파일 안에는 <button onclick="changeTheme()"> 처럼 자바스크립트 코드를 섞어 쓰면 안 된다. 
 //    HTML은 뼈대만, JS는 논리만 담당하도록 완벽히 파일을 찢어놓는 것이 현대 프론트엔드의 철칙이다.
 // 2. 확장성 (가장 중요): 
 //    onclick은 덮어쓰기(Overwrite) 방식이라 한 요소에 1개의 이벤트만 달 수 있다. 
@@ -142,24 +142,33 @@ renderTheme();
 //    - 위에서 선언한 `themeToggleBtn` (즉, HTML의 <button id="theme-toggle">)과 연결되어 있다. (화면 우측 상단의 해/달 버튼)
 // 2. 어떻게 동작하는가?
 //    - if (themeToggleBtn): 방어 로직. 만약 HTML에서 누군가 실수로 저 버튼을 지웠다면, 에러를 내지 말고 그냥 넘어가라는 뜻이다.
-//    - .addEventListener('click', ...): 버튼에 '클릭 감지기'를 달아놓고 유저가 누를 때까지 무한 대기합니다.
-//    - 유저가 클릭하면 아래 2단계가 순식간에 실행됩니다.
+//    - .addEventListener('click', ...): 버튼에 '클릭 감지기'를 달아놓고 유저가 누를 때까지 무한 대기한다.
+//    - 유저가 클릭하면 아래 2단계가 순식간에 실행된다.
 //      👉 1단계 (뇌 구조 바꾸기): STATE.isDarkMode = !STATE.isDarkMode; 
 //           (! 기호는 반대로 뒤집으라는 뜻이다. true면 false로, false면 true로 스위치를 똑딱 켠다)
 //      👉 2단계 (화면 다시 그리기): renderTheme();
-//           스위치가 켜졌으니, 화면 그리기 전담 반장을 불러서 "바뀐 상태에 맞춰서 화면 전체 다시 칠해!" 라고 명령합니다.
+//           스위치가 켜졌으니, 화면 그리기 전담 반장을 불러서 "바뀐 상태에 맞춰서 화면 전체 다시 칠해!" 라고 명령한다.
 //
-// 💡 과제 루브릭 (ES6 문법 필수 사용): `() => {}`
-//    이것이 바로 자바스크립트의 '화살표 함수(Arrow Function)'이다!
-//    C#이나 C++ 개발자에게 아주 익숙한 '람다(Lambda) 식'과 정확히 똑같은 개념이다.
-//    기존의 `function() {}` 보다 문법이 간결하고 this 바인딩 문제를 해결해주어 현대 JS 실무 표준으로 쓰인다.
-// 💡 추가 제안: 현재 익명 화살표 함수로 작성된 이벤트 핸들러들은 추후 재사용성 및 가독성을 높이기 위해 네이밍 함수(Named Function)로 분리할 것을 권장합니다.
+// (ES6 문법 필수 사용): `() => {}`
+// 이것이 바로 자바스크립트의 '화살표 함수(Arrow Function)'이다!
+// C#이나 C++ 개발자에게 아주 익숙한 '람다(Lambda) 식'과 정확히 똑같은 개념이다.
+// 기존의 `function() {}` 보다 문법이 간결하고 this 바인딩 문제를 해결해주어 현대 JS 실무 표준으로 쓰인다.
+// 추가 제안: 현재 익명 화살표 함수로 작성된 이벤트 핸들러들은 추후 재사용성 및 가독성을 높이기 위해 네이밍 함수(Named Function)로 분리할 것을 권장한다.
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
         STATE.isDarkMode = !STATE.isDarkMode; // 1. 상태 갱신 (참 <-> 거짓 뒤집기)
         renderTheme();                        // 2. 화면 갱신 지시
     });
 }
+
+// [보너스 과제] OS 시스템 테마 변경 실시간 감지
+const systemThemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+systemThemeMedia.addEventListener('change', (e) => {
+    // 시스템 테마가 바뀔 때마다 실행된다.
+    // e.matches가 true면 다크 모드, false면 라이트 모드
+    STATE.isDarkMode = e.matches;
+    renderTheme(); // 변경된 상태로 즉시 화면 갱신
+});
 
 // ----------------------------------------------------
 // 1. 바닐라 JS 스크롤리텔링 (다중 비디오 지원)
@@ -359,7 +368,7 @@ if (mobileMenuBtn && navLinks) {
     mobileMenuBtn.addEventListener('click', (e) => {
         e.stopPropagation(); // 버튼 클릭이 document로 전파되는 것 방지
         navLinks.classList.toggle('active');
-        // 💡 접근성 권장 사항: 메뉴 토글 시 aria-expanded 상태 속성 업데이트를 추가하면 스크린리더 사용에 유용합니다.
+        // 💡 접근성 권장 사항: 메뉴 토글 시 aria-expanded 상태 속성 업데이트를 추가하면 스크린리더 사용에 유용하다.
     });
 
     // 💡 유저 요청: 외부(다른 곳) 클릭 시 메뉴 알아서 사라지게 하기
@@ -438,7 +447,7 @@ const REPO_METADATA = {
 // 💡 공통 포매팅 함수: try와 catch 양쪽에서 똑같이 쓰이는 가공 로직을 하나로 통합
 const formatRepoData = (repo) => {
     let language = repo.language || 'Classified';
-    
+
     // GitHub Linguist(언어 판별 AI)의 한계를 보완하는 예외 처리 (수동 덮어쓰기)
     // - 언리얼(Unreal): C++ 소스 코드 비중이 압도적이므로 깃허브가 'C++'로 정확히 판별한다.
     // - 유니티(Unity): 실제 핵심 로직은 C#이지만, 프로젝트 구조상 .meta, .mat, .shader 등의 에셋 및 
@@ -638,7 +647,7 @@ function updateProjCarousel() {
 
                 // 📝 [개념 설명] Fire and Forget (동기 함수에서 비동기 함수 호출하기)
                 // 현재 이 화살표 함수 `() => { ... }`는 앞에 async가 안 붙은 일반(동기) 함수이다.
-                // 하지만 그 안에서 async 함수인 fetchGithubRepos()를 그냥 호출하고 있습니다. 어떻게 가능할까?
+                // 하지만 그 안에서 async 함수인 fetchGithubRepos()를 그냥 호출하고 있다. 어떻게 가능할까?
                 // 
                 // 이는 유니티에서 일반 버튼 클릭 이벤트(void OnClick) 안에 StartCoroutine(Routine())을 
                 // 그냥 던져놓고(실행시키고) 잊어버리는 것과 완전히 동일한 원리이다. (또는 UniTask의 .Forget())
